@@ -63,9 +63,13 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
     return () => window.removeEventListener('mockdb-update', reloadFromDB);
   }, []);
 
+  const activeVehicleIds = useMemo(() => new Set(vehicles.filter(v => v.status === 'ativo').map(v => v.id)), [vehicles]);
+
   // Perform advanced filters across the list
   const filteredDocs = useMemo(() => {
     return documents.filter(d => {
+      // Only show documents from active plates/vehicles
+      if (!activeVehicleIds.has(d.veiculoId)) return false;
       // Exclude documents that are not applicable
       if (!d.aplicavel) return false;
 
@@ -81,7 +85,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
 
       return matchesPlate && matchesType && matchesStatus && matchesCompany;
     });
-  }, [documents, plateQuery, typeFilter, statusFilter, companyFilter, selectedEmpresaGlobal]);
+  }, [documents, activeVehicleIds, plateQuery, typeFilter, statusFilter, companyFilter, selectedEmpresaGlobal]);
 
   // Open renewal modal and populate previous properties
   const openRenewModal = (d: Documento) => {

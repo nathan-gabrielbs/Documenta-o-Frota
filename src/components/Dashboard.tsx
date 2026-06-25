@@ -77,12 +77,14 @@ export default function Dashboard({
   }, [vehicles, updateTrigger]);
 
   // Derive sets for selections
-  const allPlates = useMemo(() => vehicles.map(v => v.placa).sort(), [vehicles]);
+  const activeVehicles = useMemo(() => vehicles.filter(v => v.status === 'ativo'), [vehicles]);
+  const activeVehicleIds = useMemo(() => new Set(activeVehicles.map(v => v.id)), [activeVehicles]);
+  const allPlates = useMemo(() => activeVehicles.map(v => v.placa).sort(), [activeVehicles]);
   
   const coupledSets = useMemo(() => {
     // Only return vehicles of type Cavalo that HAVE a linked trailer, or vice versa
-    return vehicles.filter(v => v.tipoUnidade === 'Cavalo' && v.carretaVinculadaId);
-  }, [vehicles]);
+    return activeVehicles.filter(v => v.tipoUnidade === 'Cavalo' && v.carretaVinculadaId);
+  }, [activeVehicles]);
 
   // Set default selection values once if empty
   useMemo(() => {
@@ -96,7 +98,7 @@ export default function Dashboard({
 
   // Perform filtering of Vehicles & Documents based on BOTH global active view type AND active selection
   const filteredData = useMemo(() => {
-    let finalVehicles = [...vehicles];
+    let finalVehicles = [...activeVehicles];
     
     // Apply global company filter if set (if activeTab is not already 'empresa', or apply globally)
     if (selectedEmpresaGlobal) {
@@ -105,15 +107,15 @@ export default function Dashboard({
 
     // Apply specific Dashboard Tab Filters
     if (activeTab === 'empresa') {
-      finalVehicles = vehicles.filter(v => v.empresaId === selectedEmpresaLocal);
+      finalVehicles = activeVehicles.filter(v => v.empresaId === selectedEmpresaLocal);
     } else if (activeTab === 'tipo') {
-      finalVehicles = vehicles.filter(v => v.tipoUnidade === selectedTipoLocal);
+      finalVehicles = activeVehicles.filter(v => v.tipoUnidade === selectedTipoLocal);
     } else if (activeTab === 'placa') {
-      finalVehicles = vehicles.filter(v => v.placa === selectedPlacaLocal);
+      finalVehicles = activeVehicles.filter(v => v.placa === selectedPlacaLocal);
     } else if (activeTab === 'conjunto') {
-      const cavaloObj = vehicles.find(v => v.id === selectedConjuntoLocal);
+      const cavaloObj = activeVehicles.find(v => v.id === selectedConjuntoLocal);
       if (cavaloObj) {
-        const carretaObj = vehicles.find(v => v.id === cavaloObj.carretaVinculadaId);
+        const carretaObj = activeVehicles.find(v => v.id === cavaloObj.carretaVinculadaId);
         finalVehicles = [cavaloObj, ...(carretaObj ? [carretaObj] : [])];
       } else {
         finalVehicles = [];
@@ -127,7 +129,7 @@ export default function Dashboard({
       vehicles: finalVehicles,
       documents: finalDocuments
     };
-  }, [vehicles, documents, activeTab, selectedEmpresaGlobal, selectedEmpresaLocal, selectedTipoLocal, selectedPlacaLocal, selectedConjuntoLocal]);
+  }, [activeVehicles, documents, activeTab, selectedEmpresaGlobal, selectedEmpresaLocal, selectedTipoLocal, selectedPlacaLocal, selectedConjuntoLocal]);
 
   // Document Metrics Engine
   const metrics = useMemo(() => {
@@ -251,21 +253,21 @@ const statsByCompany = useMemo(() => {
   // Identify next critical upcoming expirations ordered by urgency
   const cleanExpDocuments = useMemo(() => {
     return documents
-      .filter(d => d.aplicavel && (d.statusDocumento === 'Vencido' || d.statusDocumento === 'Crítico' || d.statusDocumento === 'Atenção'))
+      .filter(d => activeVehicleIds.has(d.veiculoId) && d.aplicavel && (d.statusDocumento === 'Vencido' || d.statusDocumento === 'Crítico' || d.statusDocumento === 'Atenção'))
       .sort((a, b) => {
         if (!a.dataVencimento) return 1;
         if (!b.dataVencimento) return -1;
         return new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime();
       })
       .slice(0, 6);
-  }, [documents]);
+  }, [documents, activeVehicleIds]);
 
   // Ranking of Vehicles with highest counts of pending items
   const vehiclePendenciesRanking = useMemo(() => {
     const counts: { [placa: string]: { plate: string, company: string, count: number, types: string[] } } = {};
     
     documents.forEach(d => {
-      if (d.aplicavel && (d.statusDocumento === 'Vencido' || d.statusDocumento === 'Crítico')) {
+      if (activeVehicleIds.has(d.veiculoId) && d.aplicavel && (d.statusDocumento === 'Vencido' || d.statusDocumento === 'Crítico')) {
         if (!counts[d.placa]) {
           counts[d.placa] = { plate: d.placa, company: obterNomeEmpresa(d.empresaId, companies), count: 0, types: [] };
         }
@@ -277,7 +279,7 @@ const statsByCompany = useMemo(() => {
     return Object.values(counts)
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
-  }, [documents]);
+  }, [documents, activeVehicleIds]);
 
   const selectLayoutHelp = () => {
     switch(activeTab) {
