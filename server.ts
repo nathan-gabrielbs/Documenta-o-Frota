@@ -71,6 +71,34 @@ app.get('/api/data', async (_req, res, next) => {
   }
 });
 
+
+async function upsertDocumentById(req: express.Request, res: express.Response, next: express.NextFunction) {
+  try {
+    const id = req.params.id;
+    const record = req.body?.record;
+
+    if (!id || !record || record.id !== id) {
+      res.status(400).json({ error: 'Envie { record: { id, ... } } com o mesmo id da URL.' });
+      return;
+    }
+
+    await pool.query(
+      `insert into app_records (collection, id, data, updated_at)
+       values ('documentos', $1, $2::jsonb, now())
+       on conflict (collection, id) do update set data = excluded.data, updated_at = now()`,
+      [id, JSON.stringify(record)]
+    );
+
+    res.json({ ok: true, record });
+  } catch (error) {
+    next(error);
+  }
+}
+
+app.patch('/api/documentos/:id', upsertDocumentById);
+app.put('/api/documentos/:id', upsertDocumentById);
+app.post('/api/documentos/:id', upsertDocumentById);
+
 app.get('/api/:collection', async (req, res, next) => {
   try {
     assertCollection(req.params.collection);

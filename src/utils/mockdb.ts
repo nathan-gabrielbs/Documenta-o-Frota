@@ -29,9 +29,20 @@ const cache: CacheState = {
 
 let isSyncing = false;
 let lastSyncError: string | null = null;
+let documentSaveQueue: Promise<void> = Promise.resolve();
 
 function emitUpdate(type?: CollectionName) {
   window.dispatchEvent(new CustomEvent('mockdb-update', { detail: type ? { type } : undefined }));
+}
+
+class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
 }
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -45,7 +56,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(body || `Falha na API Neon (${response.status})`);
+    throw new ApiError(body || `Falha na API Neon (${response.status})`, response.status);
   }
 
   return response.json() as Promise<T>;
@@ -212,7 +223,34 @@ class NeonDB {
 
   async saveDocuments(docs: Documento[]): Promise<void> {
     const normalized = docs.map(d => ({ ...d, statusDocumento: calcularStatusDocumento(d.aplicavel, d.dataVencimento) }));
-    await this.replaceCollection('documentos', normalized);
+    const saveTask = documentSaveQueue.then(() => this.replaceCollection('documentos', normalized));
+    documentSaveQueue = saveTask.catch(() => undefined);
+    await saveTask;
+  }
+
+  async updateDocument(doc: Documento): Promise<void> {
+    const normalized = { ...doc, statusDocumento: calcularStatusDocumento(doc.aplicavel, doc.dataVencimento) };
+    cache.documentos = cache.documentos.some(d => d.id === normalized.id)
+      ? cache.documentos.map(d => d.id === normalized.id ? normalized : d)
+      : [...cache.documentos, normalized];
+    emitUpdate('documentos');
+
+    try {
+      await apiFetch(`/api/documentos/${encodeURIComponent(normalized.id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ record: cleanUndefined(normalized) })
+      });
+    } catch (error) {
+      if (!(error instanceof ApiError) || (error.status !== 404 && error.status !== 405)) {
+        throw error;
+      }
+
+      console.warn('Endpoint PATCH /api/documentos/:id indisponível. Usando gravação completa serializada como fallback temporário.');
+      await this.saveDocuments(this.getDocuments().map(d => d.id === normalized.id ? normalized : d));
+      return;
+    }
+
+    await this.refreshAll();
   }
 
   async clearAllDocumentsAndExpirations(): Promise<void> {
