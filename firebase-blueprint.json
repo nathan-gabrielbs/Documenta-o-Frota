@@ -1,0 +1,75 @@
+{
+  "collections": {
+    "usuarios": {
+      "description": "Lista de usuários gerenciadores do sistema",
+      "schema": {
+        "id": "string",
+        "nome": "string",
+        "email": "string",
+        "perfil": "string",
+        "empresaId": "string | null",
+        "status": "string",
+        "dataCriacao": "string",
+        "ultimoAcesso": "string"
+      }
+    },
+    "veiculos": {
+      "description": "Cadastro de veículos da frota",
+      "schema": {
+        "id": "string",
+        "placa": "string",
+        "empresaId": "string",
+        "tipoUnidade": "string",
+        "modelo": "string",
+        "ano": "number",
+        "renavam": "string",
+        "chassi": "string",
+        "status": "string",
+        "criadoPor": "string",
+        "atualizadoPor": "string",
+        "dataCadastro": "string",
+        "dataAtualizacao": "string",
+        "carretaVinculadaId": "string | undefined",
+        "cavaloVinculadoId": "string | undefined"
+      }
+    },
+    "documentos": {
+      "description": "Controle de documentos de cada veículo",
+      "schema": {
+        "id": "string",
+        "veiculoId": "string",
+        "placa": "string",
+        "empresaId": "string",
+        "tipoDocumento": "string",
+        "aplicavel": "boolean",
+        "numeroDocumento": "string",
+        "dataEmissao": "string",
+        "dataVencimento": "string",
+        "statusDocumento": "string",
+        "criadoPor": "string",
+        "atualizadoPor": "string",
+        "dataCadastro": "string",
+        "dataAtualizacao": "string"
+      }
+    },
+    "auditoria": {
+      "description": "Log de alterações e trilha de auditoria",
+      "schema": {
+        "id": "string",
+        "usuarioId": "string",
+        "usuarioNome": "string",
+        "empresaId": "string",
+        "veiculoId": "string",
+        "placa": "string",
+        "documentoId": "string | undefined",
+        "tipoDocumento": "string | undefined",
+        "tipoAcao": "string",
+        "campoAlterado": "string",
+        "valorAnterior": "string",
+        "valorNovo": "string",
+        "observacao": "string | undefined",
+        "dataHora": "string"
+      }
+    }
+  }
+}

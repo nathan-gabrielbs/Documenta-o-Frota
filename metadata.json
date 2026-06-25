@@ -1,0 +1,6 @@
+{
+  "name": "Controle de Documentos de Frota",
+  "description": "Sistema de gestão de conformidade de documentos de frota (cavalos, carretas, etc.), auditoria, controle de empresas e vencimentos.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
