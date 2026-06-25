@@ -111,6 +111,10 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
     setInputAttachedFileName('');
     setInputAttachedFileConteudo('');
     setIsReadingFile(false);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const readAttachedFile = (file: File) => {
@@ -212,8 +216,8 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
           numeroDocumento: '',
           dataEmissao: inputApplicable ? inputEmission : '',
           dataVencimento: inputApplicable ? inputExpiration : '',
-          arquivoAnexo: inputApplicable ? inputAttachedFileName : undefined,
-          arquivoAnexoConteudo: inputApplicable ? inputAttachedFileConteudo : undefined,
+          arquivoAnexo: inputApplicable && inputAttachedFileName ? inputAttachedFileName : undefined,
+          arquivoAnexoConteudo: inputApplicable && inputAttachedFileConteudo ? inputAttachedFileConteudo : undefined,
           statusDocumento: statusResult,
           observacoes: inputObs,
           atualizadoPor: currentUser.nome,
@@ -229,24 +233,42 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
     // Optimistic local update so the status changes immediately in the table.
     setDocuments(updatedDocs);
 
+    // Fecha o modal imediatamente após passar pelas validações locais.
+    // A gravação no Neon e auditoria continuam em seguida, sem prender a tela aberta.
+    const docIdParaAuditoria = renewingDoc.id;
+    const tipoDocumentoParaAuditoria = renewingDoc.tipoDocumento;
+    const vencimentoAnteriorParaAuditoria = renewingDoc.dataVencimento;
+    const tipoAcaoAuditoria = isDateChanged ? 'renovação' : 'edição';
+
+    setRenewingDoc(null);
+    setInputEmission('');
+    setInputExpiration('');
+    setInputObs('');
+    setInputJustification('');
+    clearAttachedFile();
+    setFormError('');
+
     try {
       await dbInLocalStorage.saveDocuments(updatedDocs);
 
-      // Log in audits (Requirement 3: Audit manual changes)
-      await dbInLocalStorage.logAudit(
-        currentUser,
-        parentVeh,
-        isDateChanged ? 'renovação' : 'edição',
-        `vencimento do documento ${renewingDoc.tipoDocumento}`,
-        renewingDoc.dataVencimento ? formatarDataBR(renewingDoc.dataVencimento) : 'vazio',
-        inputApplicable ? formatarDataBR(inputExpiration) : 'Não aplicável',
-        inputJustification || 'Atualização cadastral padrão de documento.',
-        renewingDoc.id,
-        renewingDoc.tipoDocumento
-      );
+      try {
+        // Log in audits (Requirement 3: Audit manual changes)
+        await dbInLocalStorage.logAudit(
+          currentUser,
+          parentVeh,
+          tipoAcaoAuditoria,
+          `vencimento do documento ${tipoDocumentoParaAuditoria}`,
+          vencimentoAnteriorParaAuditoria ? formatarDataBR(vencimentoAnteriorParaAuditoria) : 'vazio',
+          inputApplicable ? formatarDataBR(inputExpiration) : 'Não aplicável',
+          inputJustification || 'Atualização cadastral padrão de documento.',
+          docIdParaAuditoria,
+          tipoDocumentoParaAuditoria
+        );
+      } catch (auditError) {
+        console.warn('Documento salvo, mas não foi possível registrar a auditoria:', auditError);
+      }
 
       reloadFromDB();
-      setRenewingDoc(null);
     } catch (error) {
       console.error('Erro ao salvar renovação do documento:', error);
       reloadFromDB();
@@ -560,6 +582,33 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                         </span>
                         <span className="text-[10px] text-slate-400">Tamanho máximo permitido: 750 KB. O documento será salvo no banco de dados Neon.</span>
                       </div>
+
+                      {inputAttachedFileName && (
+                        <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                          <div className="min-w-0">
+                            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                              Anexo atual
+                            </span>
+                            <span className="block truncate font-mono text-[10px] font-semibold text-slate-700">
+                              {inputAttachedFileName}
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              clearAttachedFile();
+                            }}
+                            disabled={isSavingRenewal || isReadingFile}
+                            className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-rose-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-rose-600 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                            title="Excluir anexo deste documento"
+                          >
+                            <X className="h-3 w-3" />
+                            Excluir anexo
+                          </button>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-2 gap-3.5">

@@ -103,7 +103,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               id="email-input"
               type="email"
               required
-              placeholder="ex: admin@potencial.com.br"
+              placeholder="email@grpotencial.com.br"
               className="w-full bg-white border border-slate-250 rounded-xl px-4 py-3 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all font-mono font-medium"
               value={email}
               onChange={(e) => { setEmail(e.target.value); setError(''); }}
@@ -136,49 +136,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
             Acessar Sistema
           </button>
         </form>
-
-        <div className="relative my-8">
-          <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-slate-150"></span>
-          </div>
-          <div className="relative flex justify-center text-xs uppercase font-semibold">
-            <span className="bg-white px-3 text-slate-400">Acesso Rápido para Testes</span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2.5">
-          <button
-            onClick={() => loginAs('admin@potencial.com.br')}
-            className="flex items-center gap-1.5 justify-center py-2.5 px-2 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl text-xs font-bold text-blue-600 cursor-pointer transition-colors shadow-xs"
-          >
-            <UserCheck className="h-3.5 w-3.5 shrink-0" />
-            Admin (Total)
-          </button>
-          
-          <button
-            onClick={() => loginAs('gestor@potencial.com.br')}
-            className="flex items-center gap-1.5 justify-center py-2.5 px-2 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-700 cursor-pointer transition-colors shadow-xs"
-          >
-            <UserCheck className="h-3.5 w-3.5 shrink-0" />
-            Gestor (Relatórios)
-          </button>
-
-          <button
-            onClick={() => loginAs('operacional@potencial.com.br')}
-            className="flex items-center gap-1.5 justify-center py-2.5 px-2 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl text-xs font-bold text-amber-600 cursor-pointer transition-colors shadow-xs"
-          >
-            <UserCheck className="h-3.5 w-3.5 shrink-0" />
-            Operacional (BWT)
-          </button>
-
-          <button
-            onClick={() => loginAs('consulta@potencial.com.br')}
-            className="flex items-center gap-1.5 justify-center py-2.5 px-2 border border-slate-200 bg-white hover:bg-slate-50 rounded-xl text-xs font-bold text-slate-500 cursor-pointer transition-colors shadow-xs"
-          >
-            <UserCheck className="h-3.5 w-3.5 shrink-0" />
-            Consulta (Leitura)
-          </button>
-        </div>
       </motion.div>
     </div>
   );
