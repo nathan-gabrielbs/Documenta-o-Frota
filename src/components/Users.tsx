@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Usuario, PerfilAcesso, StatusUsuario } from '../types';
 import { dbInLocalStorage, PREDEFINED_COMPANIES } from '../utils/mockdb';
+import { EMPRESAS_PADRAO, obterNomeEmpresa } from '../utils/empresaUtils';
 
 interface UsersProps {
   currentUser: Usuario;
@@ -20,6 +21,7 @@ export default function UsersPanel({ currentUser }: UsersProps) {
   
   // Local list state
   const [users, setUsers] = useState<Usuario[]>(() => dbInLocalStorage.getUsers());
+  const companyOptions = PREDEFINED_COMPANIES.length > 0 ? PREDEFINED_COMPANIES : EMPRESAS_PADRAO;
 
   useEffect(() => {
     const handleUpdate = () => {
@@ -275,8 +277,8 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                   className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-9 text-xs font-semibold cursor-pointer"
                 >
                   <option value="">Acesso Geral (Todas Empresas)</option>
-                  {PREDEFINED_COMPANIES.map(c => (
-                    <option key={c.id} value={c.id}>{c.nomeEmpresa}</option>
+                  {companyOptions.map(c => (
+                    <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companyOptions)}</option>
                   ))}
                 </select>
               </div>
@@ -348,7 +350,7 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                         {usr.empresaId ? (
                           <span className="text-slate-800 font-bold flex items-center gap-1">
                             <Building className="h-3 w-3 text-slate-400 shrink-0" />
-                            {usr.empresaId}
+                            {obterNomeEmpresa(usr.empresaId, companyOptions)}
                           </span>
                         ) : (
                           <span className="text-slate-450 italic font-medium">Geral (Toda a Frota)</span>

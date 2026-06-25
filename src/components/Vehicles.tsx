@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Veiculo, Documento, Usuario, TipoUnidade, StatusVeiculo } from '../types';
 import { dbInLocalStorage, PREDEFINED_COMPANIES, isDocumentApplicable } from '../utils/mockdb';
+import { EMPRESAS_PADRAO, obterNomeEmpresa } from '../utils/empresaUtils';
 
 interface VehiclesProps {
   currentUser: Usuario;
@@ -25,6 +26,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
   const [vehicles, setVehicles] = useState<Veiculo[]>(() => dbInLocalStorage.getVehicles());
   const [documents, setDocuments] = useState<Documento[]>(() => dbInLocalStorage.getDocuments());
   const [audits, setAudits] = useState(() => dbInLocalStorage.getAudits());
+  const companyOptions = PREDEFINED_COMPANIES.length > 0 ? PREDEFINED_COMPANIES : EMPRESAS_PADRAO;
 
   // Search and view states
   const [searchQuery, setSearchQuery] = useState(initialSearch);
@@ -41,7 +43,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
   // Form states for creating a new vehicle
   const [newPlate, setNewPlate] = useState('');
-  const [newCompany, setNewCompany] = useState('BWT');
+  const [newCompany, setNewCompany] = useState('empresa-bwt');
   const [newType, setNewType] = useState<TipoUnidade>('Cavalo');
   const [newModel, setNewModel] = useState('');
   const [newYear, setNewYear] = useState<number>(2024);
@@ -541,8 +543,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               className="w-full bg-white border border-slate-200 px-3 py-2 text-xs text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
             >
               <option value="">Todas empresas</option>
-              {PREDEFINED_COMPANIES.map(c => (
-                <option key={c.id} value={c.id}>{c.nomeEmpresa}</option>
+              {companyOptions.map(c => (
+                <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companyOptions)}</option>
               ))}
             </select>
           </div>
@@ -612,7 +614,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                             {veh.placa}
                           </span>
                           <span className="text-[10px] text-slate-500 block pt-1 font-medium select-none">
-                            {veh.empresaId}
+                            {obterNomeEmpresa(veh.empresaId, companyOptions)}
                           </span>
                         </div>
                       </td>
@@ -765,8 +767,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                     onChange={(e) => setNewCompany(e.target.value)}
                     className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs font-medium cursor-pointer"
                   >
-                    {PREDEFINED_COMPANIES.map(c => (
-                      <option key={c.id} value={c.id}>{c.nomeEmpresa}</option>
+                    {companyOptions.map(c => (
+                      <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companyOptions)}</option>
                     ))}
                   </select>
                 </div>
@@ -935,8 +937,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                     onChange={(e) => setEditingVehicle({ ...editingVehicle, empresaId: e.target.value })}
                     className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs font-medium cursor-pointer"
                   >
-                    {PREDEFINED_COMPANIES.map(c => (
-                      <option key={c.id} value={c.id}>{c.nomeEmpresa}</option>
+                    {companyOptions.map(c => (
+                      <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companyOptions)}</option>
                     ))}
                   </select>
                 </div>
@@ -1071,7 +1073,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                       Ficha do Veículo ({selectedVehicle.tipoUnidade})
                     </h3>
                     <p className="text-[11px] text-slate-500 font-medium">
-                      Divisão operacional: <strong className="text-blue-600 font-semibold">{selectedVehicle.empresaId}</strong>
+                      Divisão operacional: <strong className="text-blue-600 font-semibold">{obterNomeEmpresa(selectedVehicle.empresaId, companyOptions)}</strong>
                     </p>
                   </div>
                 </div>

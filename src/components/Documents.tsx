@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Documento, Usuario, TipoDocumento, StatusDocumento } from '../types';
 import { dbInLocalStorage, calcularStatusDocumento, formatarDataBR } from '../utils/mockdb';
+import { EMPRESAS_PADRAO, formatarNomeEmpresaId, obterNomeEmpresa } from '../utils/empresaUtils';
 
 interface DocumentsProps {
   currentUser: Usuario;
@@ -309,11 +310,9 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
               className="w-full bg-white border border-slate-200 px-3 py-2 text-xs text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
             >
               <option value="">Todas empresas da frota</option>
-              <option value="BWT">BWT</option>
-              <option value="POTENCIAL COMBUSTÍVEIS">POTENCIAL COMBUSTÍVEIS</option>
-              <option value="POTENCIAL AGRO">POTENCIAL AGRO</option>
-              <option value="BWI">BWI</option>
-              <option value="JETA">JETA</option>
+              {EMPRESAS_PADRAO.map((empresa) => (
+                <option key={empresa.id} value={empresa.id}>{obterNomeEmpresa(empresa.id, EMPRESAS_PADRAO)}</option>
+              ))}
             </select>
           </div>
         )}
@@ -360,7 +359,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                       </td>
 
                       <td className="p-4 text-slate-500 font-medium select-none">
-                        {doc.empresaId}
+                        {formatarNomeEmpresaId(doc.empresaId)}
                       </td>
 
                       <td className="p-4">
