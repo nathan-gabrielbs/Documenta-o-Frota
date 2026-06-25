@@ -11,7 +11,7 @@ import {
   TrendingUp, Award, Layers, Compass, Tag, Group
 } from 'lucide-react';
 import { Veiculo, Documento, Empresa } from '../types';
-import { dbInLocalStorage, PREDEFINED_COMPANIES, formatarDataBR } from '../utils/mockdb';
+import { dbInLocalStorage, formatarDataBR } from '../utils/mockdb';
 
 interface DashboardProps {
   onNavigateToVehicles: (plateSearch?: string) => void;
@@ -31,7 +31,7 @@ export default function Dashboard({
   const [activeTab, setActiveTab] = useState<'geral' | 'empresa' | 'tipo' | 'placa' | 'conjunto'>('geral');
   
   // Specific filters within the tabs
-  const [selectedEmpresaLocal, setSelectedEmpresaLocal] = useState<string>('BWT');
+  const [selectedEmpresaLocal, setSelectedEmpresaLocal] = useState<string>('empresa-bwt');
   const [selectedTipoLocal, setSelectedTipoLocal] = useState<string>('Cavalo');
   const [selectedPlacaLocal, setSelectedPlacaLocal] = useState<string>('');
   const [selectedConjuntoLocal, setSelectedConjuntoLocal] = useState<string>(''); // Cavalo ID
@@ -50,7 +50,44 @@ export default function Dashboard({
   // Fetch all current database entities
   const vehicles = useMemo(() => dbInLocalStorage.getVehicles(), [updateTrigger]);
   const documents = useMemo(() => dbInLocalStorage.getDocuments(), [updateTrigger]);
-  const companies = PREDEFINED_COMPANIES;
+
+const formatCompanyNameFromId = (empresaId: string) => {
+  const nomesEmpresas: Record<string, string> = {
+    'empresa-bwt': 'BWT',
+    'empresa-potencial-combustiveis': 'POTENCIAL COMBUSTÍVEIS',
+    'empresa-potencial-agro': 'POTENCIAL AGRO',
+    'empresa-bwi': 'BWI',
+    'empresa-jeta': 'JETA',
+  };
+
+  return nomesEmpresas[empresaId] || empresaId
+    .replace(/^empresa-/, '')
+    .replace(/-/g, ' ')
+    .toUpperCase();
+};
+
+  const companies = useMemo(() => {
+    const dbCompanies = ((dbInLocalStorage as any).getCompanies?.() || []) as Empresa[];
+
+    if (dbCompanies.length > 0) {
+      return dbCompanies;
+    }
+
+    const empresasIds = Array.from(
+      new Set(
+        vehicles
+          .map((v) => v.empresaId)
+          .filter(Boolean)
+      )
+    );
+
+    return empresasIds.map((empresaId) => ({
+      id: empresaId,
+      nomeEmpresa: formatCompanyNameFromId(empresaId),
+      status: 'ativo',
+      dataCadastro: '',
+    })) as Empresa[];
+  }, [vehicles, updateTrigger]);
 
   // Derive sets for selections
   const allPlates = useMemo(() => vehicles.map(v => v.placa).sort(), [vehicles]);
@@ -154,12 +191,29 @@ export default function Dashboard({
     };
   }, [filteredData]);
 
-  // Metrics segmentated by Company (Needed for multi-corporate panels)
-  const statsByCompany = useMemo(() => {
-    return companies.map(comp => {
-      const compVehicles = vehicles.filter(v => v.empresaId === comp.id);
-      const vehicleIds = new Set(compVehicles.map(v => v.id));
-      const compDocs = documents.filter(d => vehicleIds.has(d.veiculoId));
+// Metrics segmented by Company
+const statsByCompany = useMemo(() => {
+  const companiesList = Array.isArray(companies)
+    ? companies
+    : companies?.records || [];
+
+  const vehiclesList = Array.isArray(vehicles)
+    ? vehicles
+    : vehicles?.records || [];
+
+  const documentsList = Array.isArray(documents)
+    ? documents
+    : documents?.records || [];
+
+  return companiesList
+    .map((comp) => {
+      const compVehicles = vehiclesList.filter(
+        (v) => v.empresaId === comp.id && v.status !== 'inativo'
+      );
+
+      const vehicleIds = new Set(compVehicles.map((v) => v.id));
+
+      const compDocs = documentsList.filter((d) => vehicleIds.has(d.veiculoId));
 
       let total = compDocs.length;
       let validos = 0;
@@ -168,8 +222,8 @@ export default function Dashboard({
       let vencidos = 0;
       let naoAplicaveis = 0;
 
-      compDocs.forEach(d => {
-        if (!d.aplicavel) {
+      compDocs.forEach((d) => {
+        if (d.aplicavel === false) {
           naoAplicaveis++;
         } else if (d.statusDocumento === 'Válido') {
           validos++;
@@ -184,19 +238,28 @@ export default function Dashboard({
 
       const totalAplicaveis = total - naoAplicaveis;
       const compliant = validos + atencao;
-      const compliance = totalAplicaveis > 0 ? Math.round((compliant / totalAplicaveis) * 100) : 100;
+
+      const compliance =
+        totalAplicaveis > 0
+          ? Math.round((compliant / totalAplicaveis) * 100)
+          : 100;
+
       const totalPendencias = vencidos + criticos;
 
       return {
-        company: comp.id,
+        companyId: comp.id,
+        company: comp.nomeEmpresa || comp.nome || formatCompanyNameFromId(comp.id),
         vehiclesCount: compVehicles.length,
+        documentosCount: total,
         vencidos,
         criticos,
         totalPendencias,
-        compliance
+        compliance,
       };
-    }).sort((a, b) => b.totalPendencias - a.totalPendencias); // Ranking descending of problems
-  }, [vehicles, documents, companies]);
+    })
+    .filter((comp) => comp.vehiclesCount > 0 || comp.documentosCount > 0)
+    .sort((a, b) => b.totalPendencias - a.totalPendencias);
+}, [vehicles, documents, companies]);
 
   // Identify next critical upcoming expirations ordered by urgency
   const cleanExpDocuments = useMemo(() => {
@@ -597,11 +660,17 @@ export default function Dashboard({
           </div>
 
           <div className="space-y-3.5">
+            {statsByCompany.length === 0 && (
+              <div className="p-4 text-xs text-rose-600 bg-rose-50 border border-rose-100 rounded-xl">
+                Nenhum indicador por empresa encontrado. Verifique se os veículos possuem empresaId compatível com as empresas.
+              </div>
+            )}
+
             {statsByCompany.map((comp) => (
               <div 
-                key={comp.company} 
+                key={comp.companyId}
                 className={`p-3.5 rounded-xl border transition-all ${
-                  selectedEmpresaGlobal === comp.company 
+                  selectedEmpresaGlobal === comp.companyId 
                     ? 'bg-blue-50/40 border-blue-200' 
                     : 'bg-slate-50 border-slate-200/80 hover:border-slate-300'
                 }`}
