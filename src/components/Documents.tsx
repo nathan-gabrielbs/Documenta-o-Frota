@@ -288,9 +288,9 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
     <div className="space-y-6">
       
       {/* Page Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-slate-200 pb-5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-1 flex items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-1 flex items-center gap-2">
             <FileText className="text-blue-600 h-6 w-6" />
             Vencimentos e Documentação Operacional
           </h1>
@@ -301,7 +301,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
       </div>
 
       {/* Advanced filters */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 shadow-sm">
         
         {/* Search by plate */}
         <div className="relative">
@@ -311,7 +311,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
             placeholder="Filtrar por Placa (ex: ABC1D23)..."
             value={plateQuery}
             onChange={(e) => setPlateQuery(e.target.value.toUpperCase())}
-            className="w-full bg-white border border-slate-200 px-3 py-2 pl-9 text-xs text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all font-mono shadow-sm"
+            className="w-full bg-white border border-slate-200 px-3 py-2 pl-9 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all font-mono shadow-sm"
           />
           <Search className="absolute left-3 top-3 h-3.5 w-3.5 text-slate-400" />
         </div>
@@ -322,7 +322,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
             id="filter-doc-type"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="w-full bg-white border border-slate-200 px-3 py-2 text-xs text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
+            className="w-full bg-white border border-slate-200 px-3 py-2 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
           >
             <option value="">Todos tipos documentais</option>
             <option value="INMETRO">INMETRO</option>
@@ -341,7 +341,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
             id="filter-doc-status"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full bg-white border border-slate-200 px-3 py-2 text-xs text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
+            className="w-full bg-white border border-slate-200 px-3 py-2 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
           >
             <option value="">Todos os Status</option>
             <option value="Válido">Válido ( &gt; 60 dias )</option>
@@ -358,7 +358,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
               id="filter-doc-company"
               value={companyFilter}
               onChange={(e) => setCompanyFilter(e.target.value)}
-              className="w-full bg-white border border-slate-200 px-3 py-2 text-xs text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
+              className="w-full bg-white border border-slate-200 px-3 py-2 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
             >
               <option value="">Todas empresas da frota</option>
               {EMPRESAS_PADRAO.map((empresa) => (
@@ -372,14 +372,14 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
       {/* Main documents table */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {filteredDocs.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 text-xs italic">
+          <div className="py-12 text-center text-slate-400 text-sm italic">
             Nenhum documento encontrado para os filtros e placa informados.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse font-sans">
+            <table className="w-full text-left text-sm border-collapse font-sans">
               <thead>
-                <tr className="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold tracking-wider text-[10px] uppercase">
+                <tr className="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold tracking-wider text-xs uppercase">
                   <th className="p-4">Placa de Ativo</th>
                   <th className="p-4">Empresa</th>
                   <th className="p-4">Tipo Documento</th>
@@ -414,7 +414,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                       </td>
 
                       <td className="p-4">
-                        <span className="font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded text-[10px] shadow-xs">
+                        <span className="font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded text-xs shadow-xs">
                           {doc.tipoDocumento}
                         </span>
                       </td>
@@ -435,7 +435,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                       </td>
 
                       <td className="p-4 text-center">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border select-none ${
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold border select-none ${
                           isNa ? 'bg-slate-100 text-slate-450 border-slate-200' :
                           doc.statusDocumento === 'Válido' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                           isAtt ? 'bg-amber-50 text-amber-700 border-amber-200' :
@@ -463,12 +463,12 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                             title="Clique para baixar o comprovante"
                           >
                             <Upload className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                            <span className="truncate max-w-[130px] font-mono text-[10px] text-blue-600 decoration-blue-500 underline">
+                            <span className="truncate max-w-[130px] font-mono text-xs text-blue-600 decoration-blue-500 underline">
                               {doc.arquivoAnexo}
                             </span>
                           </a>
                         ) : (
-                          <span className="text-[10px] text-slate-400 italic flex items-center gap-1 select-none">
+                          <span className="text-xs text-slate-400 italic flex items-center gap-1 select-none">
                             <Info className="h-3 w-3 text-slate-350" />
                             Sem comprovante
                           </span>
@@ -479,7 +479,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                         {canWrite && (
                           <button
                             onClick={() => openRenewModal(doc)}
-                            className="p-1 px-3 bg-slate-50 hover:bg-blue-50 text-[10px] border border-slate-200 text-slate-600 hover:text-blue-600 font-bold rounded cursor-pointer flex items-center gap-1 ml-auto transition-all duration-150 active:scale-95 shadow-xs"
+                            className="p-1 px-3 bg-slate-50 hover:bg-blue-50 text-xs border border-slate-200 text-slate-600 hover:text-blue-600 font-bold rounded cursor-pointer flex items-center gap-1 ml-auto transition-all duration-150 active:scale-95 shadow-xs"
                           >
                             <Edit2 className="h-2.5 w-2.5" />
                             Renovar
@@ -535,7 +535,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                 <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
                   <div className="space-y-0.5">
                     <span className="font-bold text-slate-800 text-xs block">Obrigatoriedade Regulamentar</span>
-                    <span className="text-[10px] text-slate-500 block leading-tight">
+                    <span className="text-xs text-slate-500 block leading-tight">
                       Desmarque se este veículo for isento da exigência do {renewingDoc.tipoDocumento} nesta operação.
                     </span>
                   </div>
@@ -554,7 +554,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                 {inputApplicable ? (
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                      <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                         Cópia Digitalizada (Anexo PDF/Foto) *
                       </label>
                       <input
@@ -580,16 +580,16 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                             'Arraste e solte o documento ou clique para selecionar (PDF, PNG, JPG)'
                           )}
                         </span>
-                        <span className="text-[10px] text-slate-400">Tamanho máximo permitido: 750 KB. O documento será salvo no banco de dados Neon.</span>
+                        <span className="text-xs text-slate-400">Tamanho máximo permitido: 750 KB. O documento será salvo no banco de dados Neon.</span>
                       </div>
 
                       {inputAttachedFileName && (
-                        <div className="mt-2 flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                        <div className="mt-2 flex items-center justify-between gap-4 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
                           <div className="min-w-0">
-                            <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                            <span className="block text-xs font-bold uppercase tracking-wider text-slate-500">
                               Anexo atual
                             </span>
-                            <span className="block truncate font-mono text-[10px] font-semibold text-slate-700">
+                            <span className="block truncate font-mono text-xs font-semibold text-slate-700">
                               {inputAttachedFileName}
                             </span>
                           </div>
@@ -601,7 +601,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                               clearAttachedFile();
                             }}
                             disabled={isSavingRenewal || isReadingFile}
-                            className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-rose-200 bg-white px-2.5 py-1.5 text-[10px] font-bold text-rose-600 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                            className="shrink-0 inline-flex items-center gap-1.5 rounded-md border border-rose-200 bg-white px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 hover:text-rose-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                             title="Excluir anexo deste documento"
                           >
                             <X className="h-3 w-3" />
@@ -611,9 +611,9 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                       )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3.5">
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                        <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-xs">
                           Data de Emissão *
                         </label>
                         <input
@@ -627,7 +627,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                       </div>
 
                       <div>
-                        <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                        <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-xs">
                           Data de Vencimento *
                         </label>
                         <input
@@ -649,10 +649,10 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
 
                 {/* Justification - REQUIRED if dates are manual edited (Requirement 10) */}
                 <div>
-                  <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-[10px] flex items-center gap-1.5">
+                  <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-xs flex items-center gap-1.5">
                     Justificativa da Alteração / Renovação *
                     {renewingDoc.dataVencimento !== inputExpiration && (
-                      <span className="text-[9px] font-bold text-teal-700 bg-teal-50 border border-teal-100 px-1.5 py-0.2 rounded shrink-0">
+                      <span className="text-xs font-bold text-teal-700 bg-teal-50 border border-teal-100 px-1.5 py-0.2 rounded shrink-0">
                         Obrigatório (vencimento alterado)
                       </span>
                     )}
@@ -670,7 +670,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
 
                 {/* Document specific comments */}
                 <div>
-                  <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Observações Adicionais
                   </label>
                   <input
@@ -685,25 +685,25 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
 
                 {/* LOGS HISTORIC SUBPANEL */}
                 <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg space-y-2">
-                  <span className="font-bold text-slate-500 uppercase tracking-widest text-[9px] block">
+                  <span className="font-bold text-slate-500 uppercase tracking-widest text-xs block">
                     Histórico de Auditorias de {renewingDoc.tipoDocumento} ({renewingDoc.placa})
                   </span>
 
                   {currentDocAudits.length === 0 ? (
-                    <span className="text-[10px] text-slate-450 block pl-1 italic font-medium">
+                    <span className="text-xs text-slate-450 block pl-1 italic font-medium">
                       Nenhuma alteração de auditoria realizada neste documento até o momento.
                     </span>
                   ) : (
                     <div className="space-y-2 max-h-[120px] overflow-y-auto pr-1 font-sans">
                       {currentDocAudits.map(log => (
-                        <div key={log.id} className="text-[10px] bg-white p-2 md:p-2.5 rounded border border-slate-150 shadow-xs">
+                        <div key={log.id} className="text-xs bg-white p-2 md:p-2.5 rounded border border-slate-150 shadow-xs">
                           <div className="flex justify-between text-slate-500 mb-0.5">
                             <span className="font-bold text-slate-700">{log.usuarioNome} ({log.tipoAcao})</span>
-                            <span className="font-mono text-[9px] text-slate-400">{new Date(log.dataHora).toLocaleDateString('pt-BR')}</span>
+                            <span className="font-mono text-xs text-slate-400">{new Date(log.dataHora).toLocaleDateString('pt-BR')}</span>
                           </div>
                           <p className="text-slate-600 leading-normal pl-1.5 border-l-2 border-slate-200 font-medium">
                             De <strong className="text-slate-400 line-through">{log.valorAnterior || 'vazio'}</strong> para <strong className="text-blue-600 font-bold">{log.valorNovo}</strong>
-                            <span className="block text-[9px] text-slate-500 italic mt-0.5 font-sans font-normal">
+                            <span className="block text-xs text-slate-500 italic mt-0.5 font-sans font-normal">
                               Justificativa: "{log.observacao || 'Sem obs'}"
                             </span>
                           </p>
@@ -714,7 +714,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                 </div>
 
                 {/* Actions */}
-                <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3 font-semibold">
+                <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-4 font-semibold">
                   <button
                     type="button"
                     onClick={() => setRenewingDoc(null)}
