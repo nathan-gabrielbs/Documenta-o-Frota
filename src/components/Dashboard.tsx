@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Veiculo, Documento, Empresa } from '../types';
 import { dbInLocalStorage, formatarDataBR } from '../utils/mockdb';
+import { obterNomeEmpresa } from '../utils/empresaUtils';
 
 interface DashboardProps {
   onNavigateToVehicles: (plateSearch?: string) => void;
@@ -51,20 +52,6 @@ export default function Dashboard({
   const vehicles = useMemo(() => dbInLocalStorage.getVehicles(), [updateTrigger]);
   const documents = useMemo(() => dbInLocalStorage.getDocuments(), [updateTrigger]);
 
-const formatCompanyNameFromId = (empresaId: string) => {
-  const nomesEmpresas: Record<string, string> = {
-    'empresa-bwt': 'BWT',
-    'empresa-potencial-combustiveis': 'POTENCIAL COMBUSTÍVEIS',
-    'empresa-potencial-agro': 'POTENCIAL AGRO',
-    'empresa-bwi': 'BWI',
-    'empresa-jeta': 'JETA',
-  };
-
-  return nomesEmpresas[empresaId] || empresaId
-    .replace(/^empresa-/, '')
-    .replace(/-/g, ' ')
-    .toUpperCase();
-};
 
   const companies = useMemo(() => {
     const dbCompanies = ((dbInLocalStorage as any).getCompanies?.() || []) as Empresa[];
@@ -73,29 +60,31 @@ const formatCompanyNameFromId = (empresaId: string) => {
       return dbCompanies;
     }
 
-    const empresasIds = Array.from(
-      new Set(
+    const empresasIds: string[] = Array.from(
+      new Set<string>(
         vehicles
           .map((v) => v.empresaId)
-          .filter(Boolean)
+          .filter((empresaId): empresaId is string => Boolean(empresaId))
       )
     );
 
     return empresasIds.map((empresaId) => ({
       id: empresaId,
-      nomeEmpresa: formatCompanyNameFromId(empresaId),
+      nomeEmpresa: obterNomeEmpresa(empresaId),
       status: 'ativo',
       dataCadastro: '',
     })) as Empresa[];
   }, [vehicles, updateTrigger]);
 
   // Derive sets for selections
-  const allPlates = useMemo(() => vehicles.map(v => v.placa).sort(), [vehicles]);
+  const activeVehicles = useMemo(() => vehicles.filter(v => v.status === 'ativo'), [vehicles]);
+  const activeVehicleIds = useMemo(() => new Set(activeVehicles.map(v => v.id)), [activeVehicles]);
+  const allPlates = useMemo(() => activeVehicles.map(v => v.placa).sort(), [activeVehicles]);
   
   const coupledSets = useMemo(() => {
     // Only return vehicles of type Cavalo that HAVE a linked trailer, or vice versa
-    return vehicles.filter(v => v.tipoUnidade === 'Cavalo' && v.carretaVinculadaId);
-  }, [vehicles]);
+    return activeVehicles.filter(v => v.tipoUnidade === 'Cavalo' && v.carretaVinculadaId);
+  }, [activeVehicles]);
 
   // Set default selection values once if empty
   useMemo(() => {
@@ -109,7 +98,7 @@ const formatCompanyNameFromId = (empresaId: string) => {
 
   // Perform filtering of Vehicles & Documents based on BOTH global active view type AND active selection
   const filteredData = useMemo(() => {
-    let finalVehicles = [...vehicles];
+    let finalVehicles = [...activeVehicles];
     
     // Apply global company filter if set (if activeTab is not already 'empresa', or apply globally)
     if (selectedEmpresaGlobal) {
@@ -118,15 +107,15 @@ const formatCompanyNameFromId = (empresaId: string) => {
 
     // Apply specific Dashboard Tab Filters
     if (activeTab === 'empresa') {
-      finalVehicles = vehicles.filter(v => v.empresaId === selectedEmpresaLocal);
+      finalVehicles = activeVehicles.filter(v => v.empresaId === selectedEmpresaLocal);
     } else if (activeTab === 'tipo') {
-      finalVehicles = vehicles.filter(v => v.tipoUnidade === selectedTipoLocal);
+      finalVehicles = activeVehicles.filter(v => v.tipoUnidade === selectedTipoLocal);
     } else if (activeTab === 'placa') {
-      finalVehicles = vehicles.filter(v => v.placa === selectedPlacaLocal);
+      finalVehicles = activeVehicles.filter(v => v.placa === selectedPlacaLocal);
     } else if (activeTab === 'conjunto') {
-      const cavaloObj = vehicles.find(v => v.id === selectedConjuntoLocal);
+      const cavaloObj = activeVehicles.find(v => v.id === selectedConjuntoLocal);
       if (cavaloObj) {
-        const carretaObj = vehicles.find(v => v.id === cavaloObj.carretaVinculadaId);
+        const carretaObj = activeVehicles.find(v => v.id === cavaloObj.carretaVinculadaId);
         finalVehicles = [cavaloObj, ...(carretaObj ? [carretaObj] : [])];
       } else {
         finalVehicles = [];
@@ -140,7 +129,7 @@ const formatCompanyNameFromId = (empresaId: string) => {
       vehicles: finalVehicles,
       documents: finalDocuments
     };
-  }, [vehicles, documents, activeTab, selectedEmpresaGlobal, selectedEmpresaLocal, selectedTipoLocal, selectedPlacaLocal, selectedConjuntoLocal]);
+  }, [activeVehicles, documents, activeTab, selectedEmpresaGlobal, selectedEmpresaLocal, selectedTipoLocal, selectedPlacaLocal, selectedConjuntoLocal]);
 
   // Document Metrics Engine
   const metrics = useMemo(() => {
@@ -248,7 +237,7 @@ const statsByCompany = useMemo(() => {
 
       return {
         companyId: comp.id,
-        company: comp.nomeEmpresa || comp.nome || formatCompanyNameFromId(comp.id),
+        company: obterNomeEmpresa(comp.id, companies),
         vehiclesCount: compVehicles.length,
         documentosCount: total,
         vencidos,
@@ -264,23 +253,23 @@ const statsByCompany = useMemo(() => {
   // Identify next critical upcoming expirations ordered by urgency
   const cleanExpDocuments = useMemo(() => {
     return documents
-      .filter(d => d.aplicavel && (d.statusDocumento === 'Vencido' || d.statusDocumento === 'Crítico' || d.statusDocumento === 'Atenção'))
+      .filter(d => activeVehicleIds.has(d.veiculoId) && d.aplicavel && (d.statusDocumento === 'Vencido' || d.statusDocumento === 'Crítico' || d.statusDocumento === 'Atenção'))
       .sort((a, b) => {
         if (!a.dataVencimento) return 1;
         if (!b.dataVencimento) return -1;
         return new Date(a.dataVencimento).getTime() - new Date(b.dataVencimento).getTime();
       })
       .slice(0, 6);
-  }, [documents]);
+  }, [documents, activeVehicleIds]);
 
   // Ranking of Vehicles with highest counts of pending items
   const vehiclePendenciesRanking = useMemo(() => {
     const counts: { [placa: string]: { plate: string, company: string, count: number, types: string[] } } = {};
     
     documents.forEach(d => {
-      if (d.aplicavel && (d.statusDocumento === 'Vencido' || d.statusDocumento === 'Crítico')) {
+      if (activeVehicleIds.has(d.veiculoId) && d.aplicavel && (d.statusDocumento === 'Vencido' || d.statusDocumento === 'Crítico')) {
         if (!counts[d.placa]) {
-          counts[d.placa] = { plate: d.placa, company: d.empresaId, count: 0, types: [] };
+          counts[d.placa] = { plate: d.placa, company: obterNomeEmpresa(d.empresaId, companies), count: 0, types: [] };
         }
         counts[d.placa].count++;
         counts[d.placa].types.push(d.tipoDocumento);
@@ -290,7 +279,7 @@ const statsByCompany = useMemo(() => {
     return Object.values(counts)
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
-  }, [documents]);
+  }, [documents, activeVehicleIds]);
 
   const selectLayoutHelp = () => {
     switch(activeTab) {
@@ -329,7 +318,7 @@ const statsByCompany = useMemo(() => {
             >
               <option value="">TODAS AS EMPRESAS</option>
               {companies.map(c => (
-                <option key={c.id} value={c.id}>{c.nomeEmpresa}</option>
+                <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companies)}</option>
               ))}
             </select>
             {selectedEmpresaGlobal && (
@@ -411,7 +400,7 @@ const statsByCompany = useMemo(() => {
                 className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all font-medium shadow-sm cursor-pointer"
               >
                 {companies.map(c => (
-                  <option key={c.id} value={c.id}>{c.nomeEmpresa}</option>
+                  <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companies)}</option>
                 ))}
               </select>
             </div>
