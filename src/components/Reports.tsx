@@ -168,7 +168,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
   // Segmented compliance rate calculations by Unit Type
   const statsByUnitType = useMemo(() => {
-    const types: TipoUnidade[] = ['Cavalo', 'Carreta', 'Porta Container', 'Truck', 'Toco', 'Bitruck', 'Outro'];
+    const types: TipoUnidade[] = ['Cavalo', 'Carreta', 'Porta Container', 'Truck', 'Toco', 'Bitruck', 'Baú', 'Outro'];
     return types.map(t => {
       const typeVehs = vehicles.filter(v => v.status === 'ativo' && v.tipoUnidade === t);
       const vehIds = new Set(typeVehs.map(v => v.id));
@@ -451,6 +451,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
               <option value="Truck">Truck</option>
               <option value="Toco">Toco</option>
               <option value="Bitruck">Bitruck</option>
+              <option value="Baú">Baú</option>
               <option value="Outro">Outro</option>
             </select>
           </div>

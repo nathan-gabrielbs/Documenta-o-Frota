@@ -21,7 +21,7 @@ export interface Usuario {
 
 export type StatusVeiculo = 'ativo' | 'inativo' | 'manutenção' | 'vendido' | 'bloqueado';
 
-export type TipoUnidade = 'Cavalo' | 'Carreta' | 'Truck' | 'Toco' | 'Bitruck' | 'Outro' | 'Porta Container';
+export type TipoUnidade = 'Cavalo' | 'Carreta' | 'Truck' | 'Toco' | 'Bitruck' | 'Baú' | 'Outro' | 'Porta Container';
 
 export interface Veiculo {
   id: string;
@@ -35,6 +35,8 @@ export interface Veiculo {
   cnpj?: string;
   status: StatusVeiculo;
   observacoes?: string;
+  arrendado?: boolean;
+  empresaArrendadora?: string;
   criadoPor: string; // Nome do usuário
   atualizadoPor: string; // Nome do usuário
   dataCadastro: string;
