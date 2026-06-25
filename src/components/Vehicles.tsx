@@ -72,6 +72,19 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     return () => window.removeEventListener('mockdb-update', reloadFromDB);
   }, []);
 
+  // Evita duas barras de rolagem quando a ficha lateral do veículo estiver aberta.
+  // Mantém apenas a rolagem interna do drawer e bloqueia o scroll da página ao fundo.
+  useEffect(() => {
+    if (!selectedVehicle) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [selectedVehicle]);
+
   // Filter local lists
   const filteredVehicles = useMemo(() => {
     return vehicles.filter(v => {
@@ -716,7 +729,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
       {/* MODAL 1: Create Vehicle */}
       {isCreateModalOpen && (
-        <div id="create-vehicle-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div id="create-vehicle-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
           <motion.div 
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -907,7 +920,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
       {/* MODAL 2: Edit Vehicle */}
       {isEditModalOpen && editingVehicle && (
-        <div id="edit-vehicle-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div id="edit-vehicle-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
           <motion.div 
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -1054,15 +1067,24 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
       {/* MASTER VEHICLE DRAWER / DETAILS SIDE MODAL */}
       {selectedVehicle && (
-        <div id="vehicle-drawer-overlay" className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 flex justify-end">
+        <div
+          id="vehicle-drawer-overlay"
+          className="fixed left-0 right-0 bottom-0 top-[68px] bg-slate-900/40 backdrop-blur-xs z-[9999] flex justify-end overflow-hidden"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) {
+              setSelectedVehicle(null);
+            }
+          }}
+        >
           <motion.div 
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            className="w-full max-w-4xl bg-white border-l border-slate-200 h-full overflow-y-auto shadow-2xl p-6 font-sans flex flex-col justify-between"
+            onMouseDown={(e) => e.stopPropagation()}
+            className="relative w-full max-w-4xl bg-white border-l border-slate-200 h-[calc(100dvh-68px)] shadow-2xl font-sans flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div>
+            <div className="shrink-0 sticky top-0 bg-white px-6 pt-5 relative z-20 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
               <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-5">
                 <div className="flex items-center gap-4">
                   <span className="p-2 py-1 bg-slate-50 border border-slate-200 rounded font-mono font-bold text-slate-850 text-base shadow-xs">
@@ -1088,15 +1110,20 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                       Editar
                     </button>
                   )}
+
                   <button 
                     onClick={() => setSelectedVehicle(null)}
-                    className="p-1.5 px-3 border border-slate-200 hover:bg-slate-50 rounded bg-white text-slate-600 font-medium text-xs cursor-pointer shadow-xs transition-colors"
+                    className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 cursor-pointer shadow-xs transition-colors"
+                    title="Fechar ficha do veículo"
+                    aria-label="Fechar ficha do veículo"
                   >
-                    Fechar
+                    <X className="h-5 w-5" />
                   </button>
                 </div>
               </div>
+            </div>
 
+            <div className="flex-1 overflow-y-auto px-6 pb-6">
               {/* Master layout grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
@@ -1365,23 +1392,13 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               </div>
 
             </div>
-
-            {/* Footer buttons */}
-            <div className="mt-8 border-t border-slate-200 pt-4 flex justify-end">
-              <button
-                onClick={() => setSelectedVehicle(null)}
-                className="px-5 py-2.5 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl text-xs border border-slate-200 shadow-xs cursor-pointer transition-colors"
-              >
-                Retornar ao Painel
-              </button>
-            </div>
           </motion.div>
         </div>
       )}
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmVehicle && (
-        <div id="delete-vehicle-confirm-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div id="delete-vehicle-confirm-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -1420,7 +1437,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
       {/* Custom System Alert Modal */}
       {systemAlertMessage && (
-        <div id="system-alert-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div id="system-alert-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
