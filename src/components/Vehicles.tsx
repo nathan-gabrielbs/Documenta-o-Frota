@@ -51,6 +51,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
   const [newChassi, setNewChassi] = useState('');
   const [newStatus, setNewStatus] = useState<StatusVeiculo>('ativo');
   const [newObs, setNewObs] = useState('');
+  const [newArrendado, setNewArrendado] = useState(false);
+  const [newEmpresaArrendadora, setNewEmpresaArrendadora] = useState('');
   const [formError, setFormError] = useState('');
 
   // Composition / Coupling dropdown states or refs
@@ -153,6 +155,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
       chassi: newChassi,
       status: newStatus,
       observacoes: newObs,
+      arrendado: newArrendado,
+      empresaArrendadora: newArrendado ? newEmpresaArrendadora.trim() : '',
       criadoPor: currentUser.nome,
       atualizadoPor: currentUser.nome,
       dataCadastro: nowISO,
@@ -211,6 +215,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     setNewRenavam('');
     setNewChassi('');
     setNewObs('');
+    setNewArrendado(false);
+    setNewEmpresaArrendadora('');
   };
 
   // Open Edit Modal for a specific vehicle
@@ -261,6 +267,17 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
         original.status,
         editingVehicle.status,
         'Atualização de status do veículo.'
+      );
+    }
+    if ((original.arrendado || false) !== (editingVehicle.arrendado || false) || (original.empresaArrendadora || '') !== (editingVehicle.empresaArrendadora || '')) {
+      dbInLocalStorage.logAudit(
+        currentUser,
+        editingVehicle,
+        'edição',
+        'informação de arrendamento',
+        original.arrendado ? `Arrendado de ${original.empresaArrendadora || 'empresa não informada'}` : 'Não arrendado',
+        editingVehicle.arrendado ? `Arrendado de ${editingVehicle.empresaArrendadora || 'empresa não informada'}` : 'Não arrendado',
+        'Atualização visual de arrendamento, sem alterar responsabilidade documental.'
       );
     }
 
@@ -631,6 +648,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
             <option value="Truck">Truck</option>
             <option value="Toco">Toco</option>
             <option value="Bitruck">Bitruck</option>
+            <option value="Baú">Baú</option>
             <option value="Outro">Outro</option>
           </select>
         </div>
@@ -683,6 +701,11 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                           <span className="text-xs text-slate-500 block pt-1 font-medium select-none">
                             {obterNomeEmpresa(veh.empresaId, companyOptions)}
                           </span>
+                          {veh.arrendado && (
+                            <span className="text-[11px] text-indigo-600 block font-semibold select-none">
+                              Arrendado{veh.empresaArrendadora ? ` de ${veh.empresaArrendadora}` : ''}
+                            </span>
+                          )}
                         </div>
                       </td>
 
@@ -858,6 +881,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                     <option value="Truck">Truck</option>
                     <option value="Toco">Toco</option>
                     <option value="Bitruck">Bitruck</option>
+                    <option value="Baú">Baú</option>
                     <option value="Outro">Outro</option>
                   </select>
                 </div>
@@ -950,6 +974,40 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                   value={newObs}
                   onChange={(e) => setNewObs(e.target.value)}
                 />
+              </div>
+
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3">
+                <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600 cursor-pointer">
+                  <input
+                    id="new-arrendado-checkbox"
+                    type="checkbox"
+                    checked={newArrendado}
+                    onChange={(e) => {
+                      setNewArrendado(e.target.checked);
+                      if (!e.target.checked) setNewEmpresaArrendadora('');
+                    }}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  Unidade arrendada
+                </label>
+                {newArrendado && (
+                  <div>
+                    <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
+                      Empresa arrendadora
+                    </label>
+                    <input
+                      id="new-empresa-arrendadora-input"
+                      type="text"
+                      placeholder="Ex.: BWT"
+                      className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs"
+                      value={newEmpresaArrendadora}
+                      onChange={(e) => setNewEmpresaArrendadora(e.target.value.toUpperCase())}
+                    />
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Informação apenas visual; a responsabilidade documental permanece na Empresa da Frota.
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-4 font-semibold">
@@ -1099,6 +1157,41 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 />
               </div>
 
+              <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 space-y-3">
+                <label className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600 cursor-pointer">
+                  <input
+                    id="edit-arrendado-checkbox"
+                    type="checkbox"
+                    checked={editingVehicle.arrendado || false}
+                    onChange={(e) => setEditingVehicle({
+                      ...editingVehicle,
+                      arrendado: e.target.checked,
+                      empresaArrendadora: e.target.checked ? (editingVehicle.empresaArrendadora || '') : ''
+                    })}
+                    className="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500"
+                  />
+                  Unidade arrendada
+                </label>
+                {editingVehicle.arrendado && (
+                  <div>
+                    <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-xs">
+                      Empresa arrendadora
+                    </label>
+                    <input
+                      id="edit-empresa-arrendadora-input"
+                      type="text"
+                      placeholder="Ex.: BWT"
+                      className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs"
+                      value={editingVehicle.empresaArrendadora || ''}
+                      onChange={(e) => setEditingVehicle({ ...editingVehicle, empresaArrendadora: e.target.value.toUpperCase() })}
+                    />
+                    <p className="mt-1 text-[11px] text-slate-500">
+                      Informação apenas visual; filtros e documentos continuam pela Empresa Vinculada.
+                    </p>
+                  </div>
+                )}
+              </div>
+
               <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-4 font-semibold">
                 <button
                   type="button"
@@ -1150,6 +1243,11 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                     </h3>
                     <p className="text-sm text-slate-500 font-medium">
                       Divisão operacional: <strong className="text-blue-600 font-semibold">{obterNomeEmpresa(selectedVehicle.empresaId, companyOptions)}</strong>
+                      {selectedVehicle.arrendado && (
+                        <span className="block text-indigo-600 font-semibold">
+                          Unidade arrendada{selectedVehicle.empresaArrendadora ? ` de ${selectedVehicle.empresaArrendadora}` : ''}
+                        </span>
+                      )}
                     </p>
                   </div>
                 </div>

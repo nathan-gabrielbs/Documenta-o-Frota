@@ -421,6 +421,7 @@ const statsByCompany = useMemo(() => {
                 <option value="Truck">Truck</option>
                 <option value="Toco">Toco</option>
                 <option value="Bitruck">Bitruck</option>
+                <option value="Baú">Baú</option>
                 <option value="Outro">Outro</option>
               </select>
             </div>

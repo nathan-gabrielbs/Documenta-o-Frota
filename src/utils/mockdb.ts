@@ -95,6 +95,8 @@ export function isDocumentApplicable(tipoUnidade: string, tipoDocumento: string)
 
   if (tUnit === 'Cavalo') return tDoc === 'CIV' || tDoc === 'TACÓGRAFO' || tDoc === 'LAUDO QUINTA RODA';
   if (tUnit === 'Carreta') return tDoc === 'CIV' || tDoc === 'CIPP' || tDoc === 'INMETRO' || tDoc === 'LAUDO DE BOTTOM' || isMangote;
+  if (tUnit === 'Truck' || tUnit === 'Bitruck') return tDoc === 'CIV' || tDoc === 'CIPP' || tDoc === 'INMETRO' || tDoc === 'TACÓGRAFO';
+  if (tUnit === 'Baú' || tUnit.toLowerCase() === 'bau') return false;
   if (tUnit === 'Porta Container') return tDoc === 'CIV';
   return tDoc !== 'LAUDO QUINTA RODA';
 }
