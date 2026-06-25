@@ -8,6 +8,15 @@ export const NOMES_EMPRESAS_PADRAO: Record<string, string> = {
   'empresa-jeta': 'JETA',
 };
 
+export const EMPRESAS_PADRAO: Empresa[] = Object.entries(NOMES_EMPRESAS_PADRAO).map(
+  ([id, nomeEmpresa]) => ({
+    id,
+    nomeEmpresa,
+    status: 'ativo',
+    dataCadastro: '',
+  })
+);
+
 export function formatarNomeEmpresaId(empresaId?: string | null): string {
   if (!empresaId) return '';
 

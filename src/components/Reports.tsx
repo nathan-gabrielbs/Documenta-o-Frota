@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Veiculo, Documento, Empresa, Usuario, AuditoriaLog, TipoUnidade } from '../types';
 import { dbInLocalStorage, PREDEFINED_COMPANIES } from '../utils/mockdb';
+import { EMPRESAS_PADRAO, obterNomeEmpresa } from '../utils/empresaUtils';
 
 interface ReportsProps {
   currentUser: Usuario;
@@ -35,7 +36,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
   const vehicles = useMemo(() => dbInLocalStorage.getVehicles(), [updateTrigger]);
   const documents = useMemo(() => dbInLocalStorage.getDocuments(), [updateTrigger]);
   const audits = useMemo(() => dbInLocalStorage.getAudits(), [updateTrigger]);
-  const companies = PREDEFINED_COMPANIES;
+  const companies = PREDEFINED_COMPANIES.length > 0 ? PREDEFINED_COMPANIES : EMPRESAS_PADRAO;
 
   // Filter builders configurations
   const [filterEmpresa, setFilterEmpresa] = useState('');
@@ -153,7 +154,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
       return {
         id: comp.id,
-        nome: comp.nomeEmpresa,
+        nome: obterNomeEmpresa(comp.id, companies),
         docTotal: compDocs.length,
         applicableTotal: appDocs.length,
         compliance
@@ -194,7 +195,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
       if (missingCount > 0 || expiredCount > 0) {
         list.push({
           plate: veh.placa,
-          company: veh.empresaId,
+          company: obterNomeEmpresa(veh.empresaId, companies),
           missingCount,
           expiredCount
         });
@@ -248,7 +249,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
                 className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-9 text-xs font-semibold cursor-pointer"
               >
                 <option value="">Todas</option>
-                {companies.map(c => <option key={c.id} value={c.id}>{c.nomeEmpresa}</option>)}
+                {companies.map(c => <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companies)}</option>)}
               </select>
             </div>
           )}
@@ -539,7 +540,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
                         {log.placa}
                       </span>
                       <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 rounded uppercase">
-                        {log.empresaId}
+                        {obterNomeEmpresa(log.empresaId, companies)}
                       </span>
                       <span className="font-bold text-slate-800">{log.campoAlterado}</span>
                     </div>

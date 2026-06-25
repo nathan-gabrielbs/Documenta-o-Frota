@@ -18,6 +18,7 @@ import Reports from './components/Reports';
 import UsersPanel from './components/Users';
 import { Usuario } from './types';
 import { dbInLocalStorage, isLocalOnly, toggleLocalMode } from './utils/mockdb';
+import { formatarNomeEmpresaId } from './utils/empresaUtils';
 
 export default function App() {
   // Offline local mode fallback state
@@ -243,7 +244,7 @@ export default function App() {
             {selectedEmpresaGlobal && (
               <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-blue-50 border border-blue-150 text-blue-600 rounded-lg text-xs font-semibold shadow-xs">
                 <Globe className="h-3.5 w-3.5 animate-pulse" />
-                <span>Empresa: <strong className="font-bold">{selectedEmpresaGlobal}</strong></span>
+                <span>Empresa: <strong className="font-bold">{formatarNomeEmpresaId(selectedEmpresaGlobal)}</strong></span>
               </div>
             )}
 
@@ -255,7 +256,7 @@ export default function App() {
               <div className="text-left leading-none">
                 <span className="text-xs font-bold text-slate-800 block">{sessionUser.nome}</span>
                 <span className="text-[10px] text-slate-500 block pt-0.5 font-semibold">
-                  {sessionUser.perfil} {sessionUser.empresaId ? `• ${sessionUser.empresaId}` : ''}
+                  {sessionUser.perfil} {sessionUser.empresaId ? `• ${formatarNomeEmpresaId(sessionUser.empresaId)}` : ''}
                 </span>
               </div>
             </div>
