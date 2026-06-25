@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { 
   Plus, Edit2, Link, Unlink, Activity, FileCheck, Info,
@@ -40,6 +40,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
   const [editingVehicle, setEditingVehicle] = useState<Veiculo | null>(null);
   const [deleteConfirmVehicle, setDeleteConfirmVehicle] = useState<Veiculo | null>(null);
   const [systemAlertMessage, setSystemAlertMessage] = useState<string | null>(null);
+  const [savingDocumentId, setSavingDocumentId] = useState<string | null>(null);
+  const savingDocumentIdRef = useRef<string | null>(null);
 
   // Form states for creating a new vehicle
   const [newPlate, setNewPlate] = useState('');
@@ -446,39 +448,56 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
   // Change individual Document applicability (Obrigatoriedade por veículo)
   const toggleDocApplicability = async (doc: Documento, newVal: boolean) => {
-    const updatedDocs = documents.map(d => {
-      if (d.id === doc.id) {
-        const nextStatus = newVal ? 'Vencido' : 'Não aplicável'; // reset to simple state if checked back
-        return {
-          ...d,
-          aplicavel: newVal,
-          statusDocumento: nextStatus,
-          dataAtualizacao: new Date().toISOString(),
-          atualizadoPor: currentUser.nome
-        };
+    if (savingDocumentIdRef.current) return;
+
+    const nextStatus = newVal ? 'Vencido' : 'Não aplicável'; // reset to simple state if checked back
+    const updatedDoc: Documento = {
+      ...doc,
+      aplicavel: newVal,
+      statusDocumento: nextStatus,
+      dataAtualizacao: new Date().toISOString(),
+      atualizadoPor: currentUser.nome
+    };
+    const previousDocuments = documents;
+
+    savingDocumentIdRef.current = doc.id;
+    setSavingDocumentId(doc.id);
+    setDocuments(documents.map(d => d.id === doc.id ? updatedDoc : d));
+
+    try {
+      await dbInLocalStorage.updateDocument(updatedDoc);
+
+      // Track in audits
+      const parentVehic = vehicles.find(v => v.id === doc.veiculoId);
+      if (parentVehic) {
+        try {
+          await dbInLocalStorage.logAudit(
+            currentUser,
+            parentVehic,
+            'edição',
+            `aplicabilidade do documento ${doc.tipoDocumento}`,
+            doc.aplicavel ? 'Aplicável' : 'Não aplicável',
+            newVal ? 'Aplicável' : 'Não aplicável',
+            'Modificação das exigências regulamentares da placa.',
+            doc.id,
+            doc.tipoDocumento
+          );
+        } catch (auditError) {
+          console.error('Erro ao registrar auditoria de aplicabilidade:', auditError);
+        }
       }
-      return d;
-    });
 
-    await dbInLocalStorage.saveDocuments(updatedDocs);
-
-    // Track in audits
-    const parentVehic = vehicles.find(v => v.id === doc.veiculoId);
-    if (parentVehic) {
-      await dbInLocalStorage.logAudit(
-        currentUser,
-        parentVehic,
-        'edição',
-        `aplicabilidade do documento ${doc.tipoDocumento}`,
-        doc.aplicavel ? 'Aplicável' : 'Não aplicável',
-        newVal ? 'Aplicável' : 'Não aplicável',
-        'Modificação das exigências regulamentares da placa.',
-        doc.id,
-        doc.tipoDocumento
-      );
+      reloadFromDB();
+    } catch (error) {
+      console.error('Erro ao alterar aplicabilidade do documento:', error);
+      setDocuments(previousDocuments);
+      setSystemAlertMessage('Não foi possível salvar a alteração deste documento agora. Os dados foram restaurados e serão recarregados do banco. Tente novamente em instantes.');
+      await dbInLocalStorage.refreshAll();
+      reloadFromDB();
+    } finally {
+      savingDocumentIdRef.current = null;
+      setSavingDocumentId(null);
     }
-
-    reloadFromDB();
   };
 
   const handleAddVehicleDocumentType = async () => {
@@ -1428,23 +1447,25 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                       {selectedVehicleDocs.map((doc) => {
                         const isDocVencido = doc.statusDocumento === 'Vencido';
                         const isDocCritico = doc.statusDocumento === 'Crítico';
+                        const isSavingThisDocument = savingDocumentId === doc.id;
+                        const isSavingAnotherDocument = savingDocumentId !== null && !isSavingThisDocument;
                         return (
                           <div key={doc.id} className="flex items-center justify-between p-2.5 bg-white border border-slate-100 rounded-lg hover:bg-slate-50/60 transition-colors shadow-xs">
                             <div className="flex items-center gap-2">
                               <input
                                 id={`apply-checkbox-${doc.id}`}
                                 type="checkbox"
-                                disabled={!canWrite}
+                                disabled={!canWrite || savingDocumentId !== null}
                                 checked={doc.aplicavel}
                                 onChange={(e) => toggleDocApplicability(doc, e.target.checked)}
-                                className="w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 cursor-pointer"
+                                className={`w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 ${savingDocumentId ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
                               />
                               <div>
                                 <label htmlFor={`apply-checkbox-${doc.id}`} className="font-bold text-slate-800 text-xs block cursor-pointer">
                                   {doc.tipoDocumento}
                                 </label>
                                 <span className="text-xs text-slate-450 leading-none block font-medium">
-                                  {doc.aplicavel ? 'Documentação obrigatória' : 'Não exigido'}
+                                  {isSavingThisDocument ? 'Salvando alteração...' : isSavingAnotherDocument ? 'Aguarde o salvamento em andamento' : doc.aplicavel ? 'Documentação obrigatória' : 'Não exigido'}
                                 </span>
                               </div>
                             </div>

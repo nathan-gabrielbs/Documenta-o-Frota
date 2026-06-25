@@ -29,6 +29,7 @@ const cache: CacheState = {
 
 let isSyncing = false;
 let lastSyncError: string | null = null;
+let documentSaveQueue: Promise<void> = Promise.resolve();
 
 function emitUpdate(type?: CollectionName) {
   window.dispatchEvent(new CustomEvent('mockdb-update', { detail: type ? { type } : undefined }));
@@ -212,7 +213,23 @@ class NeonDB {
 
   async saveDocuments(docs: Documento[]): Promise<void> {
     const normalized = docs.map(d => ({ ...d, statusDocumento: calcularStatusDocumento(d.aplicavel, d.dataVencimento) }));
-    await this.replaceCollection('documentos', normalized);
+    const saveTask = documentSaveQueue.then(() => this.replaceCollection('documentos', normalized));
+    documentSaveQueue = saveTask.catch(() => undefined);
+    await saveTask;
+  }
+
+  async updateDocument(doc: Documento): Promise<void> {
+    const normalized = { ...doc, statusDocumento: calcularStatusDocumento(doc.aplicavel, doc.dataVencimento) };
+    cache.documentos = cache.documentos.some(d => d.id === normalized.id)
+      ? cache.documentos.map(d => d.id === normalized.id ? normalized : d)
+      : [...cache.documentos, normalized];
+    emitUpdate('documentos');
+
+    await apiFetch(`/api/documentos/${encodeURIComponent(normalized.id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ record: cleanUndefined(normalized) })
+    });
+    await this.refreshAll();
   }
 
   async clearAllDocumentsAndExpirations(): Promise<void> {
