@@ -528,7 +528,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                             'Arraste e solte o documento ou clique para selecionar (PDF, PNG, JPG)'
                           )}
                         </span>
-                        <span className="text-[10px] text-slate-400">Tamanho máximo permitido: 750 KB (limite do banco de dados Firestore). O documento será salvo no banco de dados.</span>
+                        <span className="text-[10px] text-slate-400">Tamanho máximo permitido: 750 KB. O documento será salvo no banco de dados Neon.</span>
                       </div>
                     </div>
 
