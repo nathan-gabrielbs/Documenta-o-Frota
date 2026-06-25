@@ -213,6 +213,177 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
     return audits.filter(a => a.tipoAcao === 'renovação' || a.tipoAcao === 'edição');
   }, [audits]);
 
+  const exportableReportSet = useMemo(() => {
+    // Regra de exportação: não exportar documentos isentos / não aplicáveis.
+    return reportResultSet.filter(doc => doc.aplicavel === true);
+  }, [reportResultSet]);
+
+  const escapeCsvValue = (value: unknown) => {
+    if (value === null || value === undefined) return '';
+
+    const normalizedValue = String(value).replace(/\r?\n|\r/g, ' ').trim();
+
+    if (
+      normalizedValue.includes(';') ||
+      normalizedValue.includes('"') ||
+      normalizedValue.includes('\n')
+    ) {
+      return `"${normalizedValue.replace(/"/g, '""')}"`;
+    }
+
+    return normalizedValue;
+  };
+
+  const formatDateTimeBR = (value?: string) => {
+    if (!value) return '';
+
+    const parsedDate = new Date(value);
+    if (Number.isNaN(parsedDate.getTime())) return value;
+
+    return parsedDate.toLocaleString('pt-BR');
+  };
+
+  const formatDateForFileName = () => {
+    return new Date()
+      .toISOString()
+      .slice(0, 19)
+      .replace(/[:T]/g, '-');
+  };
+
+  const getAppliedFiltersDescription = () => {
+    const filtros: string[] = [];
+
+    const empresaSelecionada = selectedEmpresaGlobal || filterEmpresa;
+
+    if (empresaSelecionada) {
+      filtros.push(`Empresa: ${obterNomeEmpresa(empresaSelecionada, companies)}`);
+    } else {
+      filtros.push('Empresa: Todas');
+    }
+
+    filtros.push(filterType ? `Tipo de unidade: ${filterType}` : 'Tipo de unidade: Todos');
+    filtros.push(filterDocType ? `Tipo de documento: ${filterDocType}` : 'Tipo de documento: Todos');
+    filtros.push(filterStatus ? `Status: ${filterStatus}` : 'Status: Todos');
+
+    if (filterPlaca) {
+      filtros.push(`Placa contém: ${filterPlaca.toUpperCase()}`);
+    }
+
+    if (filterApplicableOnly === 'applicable') {
+      filtros.push('Aplicabilidade: Somente aplicáveis');
+    } else if (filterApplicableOnly === 'non-applicable') {
+      filtros.push('Aplicabilidade: filtro selecionado como isentos, porém estes registros não são exportados');
+    } else {
+      filtros.push('Aplicabilidade: Todos, exceto isentos / não aplicáveis na exportação');
+    }
+
+    if (filterUserModified) {
+      filtros.push(`Último usuário modificador: ${filterUserModified}`);
+    }
+
+    if (filterStartDate) {
+      filtros.push(`Vencimento inicial: ${filterStartDate}`);
+    }
+
+    if (filterEndDate) {
+      filtros.push(`Vencimento final: ${filterEndDate}`);
+    }
+
+    return filtros;
+  };
+
+  const handleExportReportCSV = () => {
+    const generatedAt = new Date();
+
+    const metadataRows = [
+      ['Relatório', 'Conformidade documental da frota'],
+      ['Gerado em', generatedAt.toLocaleString('pt-BR')],
+      ['Usuário auditor', currentUser.nome],
+      ['Perfil do usuário', currentUser.perfil],
+      ['Total exportado', exportableReportSet.length],
+      ['Total aplicável filtrado', reportStats.totalAplicaveis],
+      ['Conformidade aplicável', `${reportStats.generalCompliance}%`],
+      ['Válidos', reportStats.validos],
+      ['Em atenção', reportStats.atencao],
+      ['Críticos', reportStats.criticos],
+      ['Vencidos', reportStats.vencidos],
+      [],
+      ['Filtros aplicados'],
+      ...getAppliedFiltersDescription().map((item) => [item]),
+      [],
+      ['Dados exportados'],
+    ];
+
+    const header = [
+      'Placa',
+      'Empresa',
+      'Tipo de unidade',
+      'Modelo',
+      'Ano',
+      'RENAVAM',
+      'Tipo documento',
+      'Número documento',
+      'Data emissão',
+      'Data vencimento',
+      'Status documento',
+      'Último usuário modificador',
+      'Data atualização',
+      'Criado por',
+      'Data cadastro',
+      'Observações',
+    ];
+
+    const dataRows = exportableReportSet.map((doc) => {
+      const veh = vehicles.find((vehicle) => vehicle.id === doc.veiculoId);
+
+      return [
+        doc.placa,
+        obterNomeEmpresa(doc.empresaId, companies),
+        veh?.tipoUnidade || '',
+        veh?.modelo || '',
+        veh?.ano || '',
+        veh?.renavam || '',
+        doc.tipoDocumento,
+        doc.numeroDocumento || '',
+        doc.dataEmissao || '',
+        doc.dataVencimento || '',
+        doc.statusDocumento || '',
+        doc.atualizadoPor || '',
+        formatDateTimeBR(doc.dataAtualizacao),
+        doc.criadoPor || '',
+        formatDateTimeBR(doc.dataCadastro),
+        doc.observacoes || '',
+      ];
+    });
+
+    const csvRows = [
+      ...metadataRows,
+      header,
+      ...dataRows,
+    ];
+
+    const csvContent = csvRows
+      .map((row) => row.map(escapeCsvValue).join(';'))
+      .join('\r\n');
+
+    // BOM ajuda o Excel no Windows a abrir acentos corretamente.
+    const blob = new Blob(['\ufeff' + csvContent], {
+      type: 'text/csv;charset=utf-8;',
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    const fileName = `relatorio-auditoria-frota-${formatDateForFileName()}.csv`;
+
+    link.href = url;
+    link.setAttribute('download', fileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-6">
       
@@ -228,10 +399,16 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
           </p>
         </div>
 
-        <div className="flex items-center gap-2 py-2.5 px-4 bg-slate-100 text-slate-500 font-bold rounded-lg text-xs border border-slate-200">
+        <button
+          type="button"
+          onClick={handleExportReportCSV}
+          disabled={exportableReportSet.length === 0}
+          className="flex items-center gap-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold rounded-lg text-xs border border-blue-600 disabled:border-slate-200 transition-colors cursor-pointer disabled:cursor-not-allowed shadow-xs"
+          title="Exportar relatório CSV conforme filtros aplicados, sem documentos não aplicáveis"
+        >
           <Download className="h-4 w-4" />
-          Exportação CSV desativada
-        </div>
+          Exportar CSV filtrado
+        </button>
       </div>
 
       {/* Structured multi-filter query block */}
