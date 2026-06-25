@@ -7,7 +7,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
   Building2, CheckCircle2, AlertTriangle, XCircle, 
-  HelpCircle, Eye, RefreshCw, FileText, ArrowRight,
+  HelpCircle, Eye, FileText, ArrowRight,
   TrendingUp, Award, Layers, Compass, Tag, Group
 } from 'lucide-react';
 import { Veiculo, Documento, Empresa } from '../types';
@@ -36,7 +36,7 @@ export default function Dashboard({
   const [selectedPlacaLocal, setSelectedPlacaLocal] = useState<string>('');
   const [selectedConjuntoLocal, setSelectedConjuntoLocal] = useState<string>(''); // Cavalo ID
 
-  // Trigger state to capture real-time updates from Firebase
+  // Trigger state to capture updates from Neon
   const [updateTrigger, setUpdateTrigger] = useState(0);
 
   useEffect(() => {
@@ -255,23 +255,6 @@ export default function Dashboard({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={async () => {
-              if (window.confirm("Deseja forçar a sincronização de todas as datas de vencimento de acordo com o arquivo original?")) {
-                try {
-                  await dbInLocalStorage.applyCSVExpirationsToAllDocuments();
-                  alert("Sincronização realizada com sucesso!");
-                } catch (e) {
-                  alert("Erro ao sincronizar: " + (e instanceof Error ? e.message : String(e)));
-                }
-              }
-            }}
-            className="flex items-center gap-1.5 px-3 py-1.5 border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-xs text-slate-700 font-semibold rounded-lg shadow-sm transition-colors cursor-pointer"
-          >
-            <RefreshCw className="h-3.5 w-3.5 text-blue-600" />
-            Sincronizar Datas CSV
-          </button>
-
           {/* Global Company Filter shortcut */}
           <div className="flex items-center gap-2 text-xs">
             <span className="text-slate-500 font-medium">Lente de Divisão:</span>

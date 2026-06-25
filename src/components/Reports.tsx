@@ -20,7 +20,7 @@ interface ReportsProps {
 
 export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsProps) {
   
-  // Trigger state to capture real-time updates from Firebase
+  // Trigger state to capture updates from Neon
   const [updateTrigger, setUpdateTrigger] = useState(0);
 
   useEffect(() => {
@@ -208,23 +208,6 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
     return audits.filter(a => a.tipoAcao === 'renovação' || a.tipoAcao === 'edição');
   }, [audits]);
 
-  // CSV Generation Simulate Dialog
-  const handleExportCSV = () => {
-    let headers = "Placa;Empresa;Tipo Documento;Anexo;Vencimento;Status;Responsavel\n";
-    let rows = reportResultSet.map(d => 
-      `${d.placa};${d.empresaId};${d.tipoDocumento};${d.arquivoAnexo || 'Sem anexo'};${d.dataVencimento || 'Sem data'};${d.statusDocumento};${d.atualizadoPor}`
-    ).join("\n");
-    
-    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = window.document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `relatorio_frotas_excel_${Date.now()}.csv`);
-    window.document.body.appendChild(link);
-    link.click();
-    window.document.body.removeChild(link);
-  };
-
   return (
     <div className="space-y-6">
       
@@ -240,13 +223,10 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
           </p>
         </div>
 
-        <button
-          onClick={handleExportCSV}
-          className="flex items-center gap-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg text-xs cursor-pointer shadow-xs select-none transition-all active:scale-[0.98]"
-        >
+        <div className="flex items-center gap-2 py-2.5 px-4 bg-slate-100 text-slate-500 font-bold rounded-lg text-xs border border-slate-200">
           <Download className="h-4 w-4" />
-          Exportar para CSV (Excel)
-        </button>
+          Exportação CSV desativada
+        </div>
       </div>
 
       {/* Structured multi-filter query block */}
