@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Documento, Usuario, TipoDocumento, StatusDocumento } from '../types';
 import { dbInLocalStorage, calcularStatusDocumento, formatarDataBR } from '../utils/mockdb';
+import { EMPRESAS_PADRAO, formatarNomeEmpresaId, obterNomeEmpresa } from '../utils/empresaUtils';
 
 interface DocumentsProps {
   currentUser: Usuario;
@@ -44,6 +45,8 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
   const [inputAttachedFileConteudo, setInputAttachedFileConteudo] = useState('');
   const [inputApplicable, setInputApplicable] = useState(true);
   const [formError, setFormError] = useState('');
+  const [isSavingRenewal, setIsSavingRenewal] = useState(false);
+  const [isReadingFile, setIsReadingFile] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -62,9 +65,13 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
     return () => window.removeEventListener('mockdb-update', reloadFromDB);
   }, []);
 
+  const activeVehicleIds = useMemo(() => new Set(vehicles.filter(v => v.status === 'ativo').map(v => v.id)), [vehicles]);
+
   // Perform advanced filters across the list
   const filteredDocs = useMemo(() => {
     return documents.filter(d => {
+      // Only show documents from active plates/vehicles
+      if (!activeVehicleIds.has(d.veiculoId)) return false;
       // Exclude documents that are not applicable
       if (!d.aplicavel) return false;
 
@@ -80,7 +87,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
 
       return matchesPlate && matchesType && matchesStatus && matchesCompany;
     });
-  }, [documents, plateQuery, typeFilter, statusFilter, companyFilter, selectedEmpresaGlobal]);
+  }, [documents, activeVehicleIds, plateQuery, typeFilter, statusFilter, companyFilter, selectedEmpresaGlobal]);
 
   // Open renewal modal and populate previous properties
   const openRenewModal = (d: Documento) => {
@@ -100,25 +107,41 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
     e.preventDefault();
   };
 
+  const clearAttachedFile = () => {
+    setInputAttachedFileName('');
+    setInputAttachedFileConteudo('');
+    setIsReadingFile(false);
+  };
+
+  const readAttachedFile = (file: File) => {
+    if (file.size > 750 * 1024) {
+      setFormError('O arquivo selecionado excede o limite máximo permitido de 750 KB. Por favor, reduza o tamanho do arquivo ou use um arquivo comprimido.');
+      clearAttachedFile();
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+      return;
+    }
+
+    setFormError('');
+    setIsReadingFile(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setInputAttachedFileName(file.name);
+      setInputAttachedFileConteudo(reader.result as string);
+      setIsReadingFile(false);
+    };
+    reader.onerror = () => {
+      setFormError('Não foi possível ler o arquivo anexado. Tente selecionar o arquivo novamente.');
+      clearAttachedFile();
+    };
+    reader.readAsDataURL(file);
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.size > 750 * 1024) {
-        setFormError('O arquivo selecionado excede o limite máximo permitido de 750 KB. Por favor, reduza o tamanho do arquivo ou use um arquivo comprimido.');
-        setInputAttachedFileName('');
-        setInputAttachedFileConteudo('');
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
-        return;
-      }
-      setFormError('');
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setInputAttachedFileName(file.name);
-        setInputAttachedFileConteudo(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      readAttachedFile(file);
     }
   };
 
@@ -126,19 +149,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      if (file.size > 750 * 1024) {
-        setFormError('O arquivo selecionado excede o limite máximo permitido de 750 KB. Por favor, reduza o tamanho do arquivo ou use um arquivo comprimido.');
-        setInputAttachedFileName('');
-        setInputAttachedFileConteudo('');
-        return;
-      }
-      setFormError('');
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setInputAttachedFileName(file.name);
-        setInputAttachedFileConteudo(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      readAttachedFile(file);
     }
   };
 
@@ -147,9 +158,14 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
   };
 
   // Save the modified document + write logs with justification checked
-  const handleRenewalSubmit = (e: React.FormEvent) => {
+  const handleRenewalSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!renewingDoc) return;
+    if (!renewingDoc || isSavingRenewal) return;
+
+    if (isReadingFile) {
+      setFormError('Aguarde o término da leitura do arquivo anexado antes de salvar.');
+      return;
+    }
 
     // Validation checks
     if (inputApplicable) {
@@ -207,23 +223,37 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
       return d;
     });
 
-    dbInLocalStorage.saveDocuments(updatedDocs);
+    setIsSavingRenewal(true);
+    setFormError('');
 
-    // Log in audits (Requirement 3: Audit manual changes)
-    dbInLocalStorage.logAudit(
-      currentUser,
-      parentVeh,
-      isDateChanged ? 'renovação' : 'edição',
-      `vencimento do documento ${renewingDoc.tipoDocumento}`,
-      renewingDoc.dataVencimento ? formatarDataBR(renewingDoc.dataVencimento) : 'vazio',
-      inputApplicable ? formatarDataBR(inputExpiration) : 'Não aplicável',
-      inputJustification || 'Atualização cadastral padrão de documento.',
-      renewingDoc.id,
-      renewingDoc.tipoDocumento
-    );
+    // Optimistic local update so the status changes immediately in the table.
+    setDocuments(updatedDocs);
 
-    reloadFromDB();
-    setRenewingDoc(null);
+    try {
+      await dbInLocalStorage.saveDocuments(updatedDocs);
+
+      // Log in audits (Requirement 3: Audit manual changes)
+      await dbInLocalStorage.logAudit(
+        currentUser,
+        parentVeh,
+        isDateChanged ? 'renovação' : 'edição',
+        `vencimento do documento ${renewingDoc.tipoDocumento}`,
+        renewingDoc.dataVencimento ? formatarDataBR(renewingDoc.dataVencimento) : 'vazio',
+        inputApplicable ? formatarDataBR(inputExpiration) : 'Não aplicável',
+        inputJustification || 'Atualização cadastral padrão de documento.',
+        renewingDoc.id,
+        renewingDoc.tipoDocumento
+      );
+
+      reloadFromDB();
+      setRenewingDoc(null);
+    } catch (error) {
+      console.error('Erro ao salvar renovação do documento:', error);
+      reloadFromDB();
+      setFormError('Não foi possível salvar a renovação no Neon. Verifique a conexão e tente novamente.');
+    } finally {
+      setIsSavingRenewal(false);
+    }
   };
 
   // Audits logs filtered by document
@@ -309,11 +339,9 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
               className="w-full bg-white border border-slate-200 px-3 py-2 text-xs text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
             >
               <option value="">Todas empresas da frota</option>
-              <option value="BWT">BWT</option>
-              <option value="POTENCIAL COMBUSTÍVEIS">POTENCIAL COMBUSTÍVEIS</option>
-              <option value="POTENCIAL AGRO">POTENCIAL AGRO</option>
-              <option value="BWI">BWI</option>
-              <option value="JETA">JETA</option>
+              {EMPRESAS_PADRAO.map((empresa) => (
+                <option key={empresa.id} value={empresa.id}>{obterNomeEmpresa(empresa.id, EMPRESAS_PADRAO)}</option>
+              ))}
             </select>
           </div>
         )}
@@ -360,7 +388,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                       </td>
 
                       <td className="p-4 text-slate-500 font-medium select-none">
-                        {doc.empresaId}
+                        {formatarNomeEmpresaId(doc.empresaId)}
                       </td>
 
                       <td className="p-4">
@@ -522,7 +550,9 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                       >
                         <Upload className="h-5 w-5 text-blue-500 shrink-0 animate-pulse" />
                         <span className="font-semibold text-slate-700">
-                          {inputAttachedFileName ? (
+                          {isReadingFile ? (
+                            'Lendo arquivo anexado...'
+                          ) : inputAttachedFileName ? (
                             <span>Arquivo selecionado: <strong className="text-blue-600 font-mono font-bold">{inputAttachedFileName}</strong></span>
                           ) : (
                             'Arraste e solte o documento ou clique para selecionar (PDF, PNG, JPG)'
@@ -639,15 +669,17 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                   <button
                     type="button"
                     onClick={() => setRenewingDoc(null)}
-                    className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                    disabled={isSavingRenewal}
+                    className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-50 rounded-lg cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer shadow-xs transition-colors"
+                    disabled={isSavingRenewal || isReadingFile}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer shadow-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
-                    Gravar Renovação
+                    {isSavingRenewal ? 'Salvando...' : isReadingFile ? 'Lendo anexo...' : 'Gravar Renovação'}
                   </button>
                 </div>
 
