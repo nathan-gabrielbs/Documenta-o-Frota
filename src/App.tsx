@@ -261,40 +261,6 @@ export default function App() {
               </div>
             </div>
 
-            {/* System Mode & Force Reset Control panel */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={async () => {
-                  if (confirm("Deseja realmente limpar todos os documentos? Isso definirá todos os números e datas de vencimento como em branco no seu navegador.")) {
-                    localStorage.setItem('frota_doc_documents_cleared_force_v3', 'true');
-                    toggleLocalMode(true);
-                    await dbInLocalStorage.clearAllDocumentsAndExpirations();
-                    alert("Todos os documentos da frota foram redefinidos para em branco com sucesso em Modo Local!");
-                  }
-                }}
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1 bg-slate-100 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 text-slate-700 hover:text-rose-600 rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-                title="Limpar todos os documentos do sistema e colocá-lo em modo local limpo"
-              >
-                <ClipboardList className="h-3.5 w-3.5" />
-                <span>Limpar Documentos</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  toggleLocalMode(!isOfflineMode);
-                }}
-                className={`flex items-center gap-1.5 px-3 py-1 border rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer ${
-                  isOfflineMode 
-                    ? "bg-amber-50 border-amber-200 text-amber-700 hover:bg-amber-100" 
-                    : "bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
-                }`}
-                title={isOfflineMode ? "Clique para ativar o Modo Nuvem" : "Clique para ativar o Modo Local (Offline)"}
-              >
-                <div className={`w-2 h-2 rounded-full ${isOfflineMode ? "bg-amber-500" : "bg-emerald-500"} ${isOfflineMode ? "animate-pulse" : ""}`} />
-                <span>{isOfflineMode ? "Modo Local" : "Modo Nuvem"}</span>
-              </button>
-            </div>
-
             {/* Logout dispatch */}
             <button
               onClick={handleLogout}
@@ -355,7 +321,7 @@ export default function App() {
             }`}
           >
             <Compass className="h-4 w-4 shrink-0" />
-            Visão Geral / Analytics
+            Visão Geral
           </button>
 
           <button
@@ -368,7 +334,7 @@ export default function App() {
             }`}
           >
             <Truck className="h-4 w-4 shrink-0" />
-            Cadastro de Veículos (Frota)
+            Veículos
           </button>
 
           <button
@@ -381,7 +347,7 @@ export default function App() {
             }`}
           >
             <FileText className="h-4 w-4 shrink-0" />
-            Documentos e Expirados
+            Documentos
           </button>
 
           <button

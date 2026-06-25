@@ -106,18 +106,20 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
   }, [documents, vehicles, filterEmpresa, filterType, filterDocType, filterStatus, filterPlaca, filterApplicableOnly, filterUserModified, filterStartDate, filterEndDate, selectedEmpresaGlobal]);
 
   // Aggregate stats based on our active report query output
+  // Regra: documentos isentos / não aplicáveis NÃO entram no cálculo de estatísticas e conformidade.
   const reportStats = useMemo(() => {
-    let total = reportResultSet.length;
+    const documentosAplicaveis = reportResultSet.filter(d => d.aplicavel === true);
+    const documentosIsentos = reportResultSet.filter(d => d.aplicavel === false);
+
+    let total = documentosAplicaveis.length;
     let validos = 0;
     let atencao = 0;
     let criticos = 0;
     let vencidos = 0;
-    let naoAplicaveis = 0;
+    let naoAplicaveis = documentosIsentos.length;
 
-    reportResultSet.forEach(d => {
-      if (!d.aplicavel) {
-        naoAplicaveis++;
-      } else if (d.statusDocumento === 'Válido') {
+    documentosAplicaveis.forEach(d => {
+      if (d.statusDocumento === 'Válido') {
         validos++;
       } else if (d.statusDocumento === 'Atenção') {
         atencao++;
@@ -128,12 +130,13 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
       }
     });
 
-    const totalAplicaveis = total - naoAplicaveis;
+    const totalAplicaveis = total;
     const compliantCount = validos + atencao;
     const generalCompliance = totalAplicaveis > 0 ? Math.round((compliantCount / totalAplicaveis) * 100) : 100;
 
     return {
       total,
+      totalBruto: reportResultSet.length,
       validos,
       atencao,
       criticos,
@@ -403,7 +406,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center shadow-xs">
               <span className="text-[10px] text-slate-500 block font-bold tracking-tight uppercase">ENCONTRADOS</span>
               <strong className="text-xl text-slate-900 font-extrabold">{reportStats.total}</strong>
-              <span className="text-[9px] text-slate-400 block font-bold">documentos</span>
+              <span className="text-[9px] text-slate-400 block font-bold">documentos aplicáveis</span>
             </div>
 
             <div className="p-3 bg-blue-50 border border-blue-250 rounded-xl text-center shadow-xs">
@@ -431,8 +434,6 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
               <strong className="text-rose-600 font-extrabold">{reportStats.vencidos}</strong>
             </div>
             <div className="flex justify-between items-center text-slate-600 font-semibold p-1.5 hover:bg-slate-55 rounded transition-colors">
-              <span>Isentos de conformidade</span>
-              <strong className="text-slate-500 font-bold">{reportStats.naoAplicaveis}</strong>
             </div>
           </div>
         </div>
@@ -491,7 +492,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
               Nenhuma placa com documentos exigíveis em falta ou atualmente vencidos.
             </div>
           ) : (
-            <div className="space-y-2.5 max-h-[200px] overflow-y-auto pr-1">
+            <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1 scrollbar-thin">
               {problematicPlates.map(item => (
                 <div key={item.plate} className="text-xs p-2 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between shadow-xs">
                   <div className="space-y-0.5">
