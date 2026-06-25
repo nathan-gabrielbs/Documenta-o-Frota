@@ -60,7 +60,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
     return documents.filter(doc => {
       // Find corresponding vehicle
       const veh = vehicles.find(v => v.id === doc.veiculoId);
-      if (!veh) return false;
+      if (!veh || veh.status !== 'ativo') return false;
 
       // Filter: Company (respect global selected header if applicable)
       const targetCompany = selectedEmpresaGlobal || filterEmpresa;
@@ -147,7 +147,8 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
   // Segmented compliance rate calculations (For Corporate Breakdown)
   const statsByEnterprise = useMemo(() => {
     return companies.map(comp => {
-      const compDocs = documents.filter(d => d.empresaId === comp.id);
+      const compVehicleIds = new Set(vehicles.filter(v => v.empresaId === comp.id && v.status === 'ativo').map(v => v.id));
+      const compDocs = documents.filter(d => compVehicleIds.has(d.veiculoId));
       const appDocs = compDocs.filter(d => d.aplicavel);
       const okDocs = appDocs.filter(d => d.statusDocumento === 'Válido' || d.statusDocumento === 'Atenção');
       const compliance = appDocs.length > 0 ? Math.round((okDocs.length / appDocs.length) * 100) : 100;
@@ -160,13 +161,13 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
         compliance
       };
     });
-  }, [documents, companies]);
+  }, [vehicles, documents, companies]);
 
   // Segmented compliance rate calculations by Unit Type
   const statsByUnitType = useMemo(() => {
     const types: TipoUnidade[] = ['Cavalo', 'Carreta', 'Porta Container', 'Truck', 'Toco', 'Bitruck', 'Outro'];
     return types.map(t => {
-      const typeVehs = vehicles.filter(v => v.tipoUnidade === t);
+      const typeVehs = vehicles.filter(v => v.status === 'ativo' && v.tipoUnidade === t);
       const vehIds = new Set(typeVehs.map(v => v.id));
       const typeDocs = documents.filter(d => vehIds.has(d.veiculoId));
       const appDocs = typeDocs.filter(d => d.aplicavel);
@@ -185,7 +186,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
   const problematicPlates = useMemo(() => {
     const list: { plate: string; company: string; missingCount: number; expiredCount: number }[] = [];
     
-    vehicles.forEach(veh => {
+    vehicles.filter(veh => veh.status === 'ativo').forEach(veh => {
       const vehDocs = documents.filter(d => d.veiculoId === veh.id);
       const appDocs = vehDocs.filter(d => d.aplicavel);
       
