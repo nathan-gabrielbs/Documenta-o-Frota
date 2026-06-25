@@ -497,9 +497,9 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     <div className="space-y-6">
       
       {/* Title block */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-slate-200 pb-5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-1 flex items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-1 flex items-center gap-2">
             <Truck className="text-blue-600 h-6 w-6" />
             Cadastro de Veículos da Frota
           </h1>
@@ -521,7 +521,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
       </div>
 
       {/* Advanced Filters */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row gap-3 shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row gap-4 shadow-sm">
         <div className="flex-1 relative">
           <input
             id="search-vehicle-input"
@@ -529,7 +529,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
             placeholder="Pesquisar por placa ou modelo..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white border border-slate-200 px-3 py-2 pl-9 text-xs text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm"
+            className="w-full bg-white border border-slate-200 px-3 py-2 pl-9 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm"
           />
           <Search className="absolute left-3 top-3 h-3.5 w-3.5 text-slate-400" />
         </div>
@@ -540,7 +540,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               id="filter-company-select"
               value={companyFilter}
               onChange={(e) => setCompanyFilter(e.target.value)}
-              className="w-full bg-white border border-slate-200 px-3 py-2 text-xs text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
+              className="w-full bg-white border border-slate-200 px-3 py-2 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
             >
               <option value="">Todas empresas</option>
               {companyOptions.map(c => (
@@ -555,7 +555,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
             id="filter-type-select"
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="w-full bg-white border border-slate-200 px-3 py-2 text-xs text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
+            className="w-full bg-white border border-slate-200 px-3 py-2 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
           >
             <option value="">Todos tipos de unidade</option>
             <option value="Cavalo">Cavalo</option>
@@ -572,14 +572,14 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
       {/* Main Vehicles Table */}
       <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
         {filteredVehicles.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 text-xs">
+          <div className="py-12 text-center text-slate-400 text-sm">
             Nenhum veículo encontrado com os filtros atuais.
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
+            <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold tracking-wider text-[10px] uppercase">
+                <tr className="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold tracking-wider text-xs uppercase">
                   <th className="p-4">Placa / Empresa</th>
                   <th className="p-4">Tipo</th>
                   <th className="p-4">Modelo / Ano</th>
@@ -613,7 +613,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                           <span className="font-mono font-bold text-xs text-slate-800 bg-slate-100 px-2 py-1 border border-slate-200 rounded group-hover:border-blue-300 transition-colors shadow-xs">
                             {veh.placa}
                           </span>
-                          <span className="text-[10px] text-slate-500 block pt-1 font-medium select-none">
+                          <span className="text-xs text-slate-500 block pt-1 font-medium select-none">
                             {obterNomeEmpresa(veh.empresaId, companyOptions)}
                           </span>
                         </div>
@@ -628,7 +628,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                       <td className="p-4">
                         <div className="space-y-0.5 text-slate-600">
                           <p className="font-medium truncate max-w-[170px] text-slate-900">{veh.modelo}</p>
-                          <p className="text-[10px] text-slate-400">Ano: {veh.ano}</p>
+                          <p className="text-xs text-slate-400">Ano: {veh.ano}</p>
                         </div>
                       </td>
 
@@ -638,14 +638,14 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                             compValue >= 90 ? 'bg-emerald-500' :
                             compValue >= 70 ? 'bg-amber-500' : 'bg-rose-500'
                           }`} />
-                          <span className="font-bold text-slate-700 text-[11px]">{compValue}%</span>
+                          <span className="font-bold text-slate-700 text-sm">{compValue}%</span>
                         </div>
                       </td>
 
                       <td className="p-4" onClick={(e) => e.stopPropagation()}>
                         {linkedRefObj ? (
                           <div className="flex items-center gap-2">
-                            <span className="p-1 px-1.5 text-[10px] font-mono border border-slate-200 bg-slate-50 rounded text-slate-700 font-bold shadow-xs">
+                            <span className="p-1 px-1.5 text-xs font-mono border border-slate-200 bg-slate-50 rounded text-slate-700 font-bold shadow-xs">
                               {linkedRefObj.placa}
                             </span>
                             <button
@@ -657,14 +657,14 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                             </button>
                           </div>
                         ) : (
-                          <span className="text-[10px] text-slate-400 italic font-sans select-none">
+                          <span className="text-xs text-slate-400 italic font-sans select-none">
                             Individual / Sem Vínculo
                           </span>
                         )}
                       </td>
 
                       <td className="p-4 text-center">
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wider lowercase border select-none ${
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold tracking-wider lowercase border select-none ${
                           veh.status === 'ativo' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
                           veh.status === 'manutenção' ? 'bg-amber-50 text-amber-700 border-amber-100' :
                           veh.status === 'bloqueado' ? 'bg-rose-50 text-rose-700 border-rose-100 shadow-xs' :
@@ -740,10 +740,10 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               </div>
             )}
 
-            <form onSubmit={handleCreateVehicle} className="space-y-4 text-xs font-sans">
-              <div className="grid grid-cols-2 gap-3.5">
+            <form onSubmit={handleCreateVehicle} className="space-y-4 text-sm font-sans">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Placa do Veículo *
                   </label>
                   <input
@@ -758,7 +758,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </div>
 
                 <div>
-                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Empresa da Frota *
                   </label>
                   <select
@@ -774,9 +774,9 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3.5">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Tipo de Unidade *
                   </label>
                   <select
@@ -796,7 +796,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </div>
 
                 <div>
-                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Status Operacional *
                   </label>
                   <select
@@ -814,9 +814,9 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3.5">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Modelo
                   </label>
                   <input
@@ -830,7 +830,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </div>
 
                 <div>
-                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Ano
                   </label>
                   <input
@@ -843,9 +843,9 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3.5">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Renavam (11 dígitos)
                   </label>
                   <input
@@ -859,7 +859,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </div>
 
                 <div>
-                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Chassi (opcional)
                   </label>
                   <input
@@ -873,7 +873,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               </div>
 
               <div>
-                <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                   Observações Internas
                 </label>
                 <textarea
@@ -885,7 +885,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 />
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3 font-semibold">
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-4 font-semibold">
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
@@ -925,10 +925,10 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               </button>
             </div>
 
-            <form onSubmit={handleEditVehicleSubmit} className="space-y-4 text-xs font-sans">
-              <div className="grid grid-cols-2 gap-3.5">
+            <form onSubmit={handleEditVehicleSubmit} className="space-y-4 text-sm font-sans">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Empresa Vinculada (Audita Alteração)
                   </label>
                   <select
@@ -944,7 +944,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </div>
 
                 <div>
-                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Status Operacional
                   </label>
                   <select
@@ -962,9 +962,9 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-3.5">
+              <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Modelo
                   </label>
                   <input
@@ -977,7 +977,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </div>
 
                 <div>
-                  <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Ano
                   </label>
                   <input
@@ -990,9 +990,9 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3.5">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Renavam
                   </label>
                   <input
@@ -1006,7 +1006,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </div>
 
                 <div>
-                  <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                  <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-xs">
                     Chassi
                   </label>
                   <input
@@ -1020,7 +1020,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               </div>
 
               <div>
-                <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-[10px]">
+                <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-xs">
                   Observações de Frota
                 </label>
                 <textarea
@@ -1032,7 +1032,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 />
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-3 font-semibold">
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-4 font-semibold">
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
@@ -1064,7 +1064,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
             {/* Header */}
             <div>
               <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-5">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-4">
                   <span className="p-2 py-1 bg-slate-50 border border-slate-200 rounded font-mono font-bold text-slate-850 text-base shadow-xs">
                     {selectedVehicle.placa}
                   </span>
@@ -1072,7 +1072,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                     <h3 className="text-sm font-bold text-slate-900">
                       Ficha do Veículo ({selectedVehicle.tipoUnidade})
                     </h3>
-                    <p className="text-[11px] text-slate-500 font-medium">
+                    <p className="text-sm text-slate-500 font-medium">
                       Divisão operacional: <strong className="text-blue-600 font-semibold">{obterNomeEmpresa(selectedVehicle.empresaId, companyOptions)}</strong>
                     </p>
                   </div>
@@ -1102,39 +1102,39 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 
                 {/* Column 1: Core Specifications */}
                 <div className="bg-slate-50 p-4 border border-slate-200 rounded-xl space-y-4 text-xs">
-                  <h4 className="font-bold text-blue-600 uppercase tracking-widest text-[10px] pb-1 border-b border-slate-200">
+                  <h4 className="font-bold text-blue-600 uppercase tracking-widest text-xs pb-1 border-b border-slate-200">
                     Propriedades Técnicas
                   </h4>
 
                   <div className="space-y-2.5 text-slate-650">
                     <div>
-                      <span className="text-[10px] text-slate-450 block font-medium">Modelo / Descritivo</span>
+                      <span className="text-xs text-slate-450 block font-medium">Modelo / Descritivo</span>
                       <strong className="text-slate-900 text-xs">{selectedVehicle.modelo}</strong>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
                       <div>
-                        <span className="text-[10px] text-slate-450 block font-medium">Ano Fabricação</span>
+                        <span className="text-xs text-slate-450 block font-medium">Ano Fabricação</span>
                         <strong className="text-slate-800">{selectedVehicle.ano}</strong>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-450 block font-medium">Status Operação</span>
+                        <span className="text-xs text-slate-450 block font-medium">Status Operação</span>
                         <strong className="text-blue-600 capitalize">{selectedVehicle.status}</strong>
                       </div>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-450 block font-medium">Renavam</span>
-                      <strong className="font-mono text-slate-800 tracking-wider text-[11px]">{selectedVehicle.renavam || 'Não registrado'}</strong>
+                      <span className="text-xs text-slate-450 block font-medium">Renavam</span>
+                      <strong className="font-mono text-slate-800 tracking-wider text-sm">{selectedVehicle.renavam || 'Não registrado'}</strong>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-450 block font-medium">Identificação Chassi</span>
-                      <strong className="font-mono text-slate-600 text-[10px] block truncate">{selectedVehicle.chassi || 'Não informado'}</strong>
+                      <span className="text-xs text-slate-450 block font-medium">Identificação Chassi</span>
+                      <strong className="font-mono text-slate-600 text-xs block truncate">{selectedVehicle.chassi || 'Não informado'}</strong>
                     </div>
                     <div>
-                      <span className="text-[10px] text-slate-450 block font-medium">Registro de Entrada</span>
-                      <span className="text-[10px] text-slate-500 font-medium">{new Date(selectedVehicle.dataCadastro).toLocaleDateString('pt-BR')} por {selectedVehicle.criadoPor}</span>
+                      <span className="text-xs text-slate-450 block font-medium">Registro de Entrada</span>
+                      <span className="text-xs text-slate-500 font-medium">{new Date(selectedVehicle.dataCadastro).toLocaleDateString('pt-BR')} por {selectedVehicle.criadoPor}</span>
                     </div>
                     {selectedVehicle.observacoes && (
-                      <div className="pt-2 border-t border-slate-200 text-[11px] text-slate-500 leading-relaxed italic bg-white/40 p-1.5 rounded border border-slate-100">
+                      <div className="pt-2 border-t border-slate-200 text-sm text-slate-500 leading-relaxed italic bg-white/40 p-1.5 rounded border border-slate-100">
                         "{selectedVehicle.observacoes}"
                       </div>
                     )}
@@ -1147,24 +1147,24 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                   {/* COUPLING BLOCK (Requirement 4) */}
                   <div className="bg-slate-50 p-4 border border-slate-200 rounded-xl space-y-3.5">
                     <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-blue-600 uppercase tracking-widest text-[10px]">
+                      <h4 className="font-bold text-blue-600 uppercase tracking-widest text-xs">
                         Composição do Conjunto Rodoviário
                       </h4>
-                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                         Vínculo Cavalo + Reboque
                       </div>
                     </div>
 
                     {selectedLinkedVehicle ? (
-                      <div className="p-3.5 rounded-xl border border-blue-200 bg-blue-50/50 flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-3">
+                      <div className="p-3.5 rounded-xl border border-blue-200 bg-blue-50/50 flex items-center justify-between gap-6">
+                        <div className="flex items-center gap-4">
                           <div className="p-2 bg-blue-100 border border-blue-200 text-blue-600 rounded-lg">
                             <Truck className="h-5 w-5" />
                           </div>
                           <div>
-                            <span className="text-[10px] text-blue-650 block font-bold uppercase tracking-tight">Conjunto Ativo</span>
+                            <span className="text-xs text-blue-650 block font-bold uppercase tracking-tight">Conjunto Ativo</span>
                             <span className="font-mono font-bold text-slate-900 text-xs">{selectedLinkedVehicle.placa}</span>
-                            <span className="text-[10px] text-slate-500 block">{selectedLinkedVehicle.tipoUnidade} • {selectedLinkedVehicle.modelo}</span>
+                            <span className="text-xs text-slate-500 block">{selectedLinkedVehicle.tipoUnidade} • {selectedLinkedVehicle.modelo}</span>
                           </div>
                         </div>
 
@@ -1180,7 +1180,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                       </div>
                     ) : (
                       <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-3">
-                        <div className="text-[11px] text-slate-500 leading-normal">
+                        <div className="text-sm text-slate-500 leading-normal">
                           Este veículo está operando de forma <strong className="text-slate-800">individual</strong> e independente no sistema. Vincule com uma licença da mesma empresa corporativa.
                         </div>
 
@@ -1190,7 +1190,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                                 id="couple-target-select"
                                 value={couplingTargetId}
                                 onChange={(e) => setCouplingTargetId(e.target.value)}
-                                className="bg-white border border-slate-250 px-2.5 py-1.5 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all flex-1 text-xs font-semibold cursor-pointer"
+                                className="bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all flex-1 text-xs font-semibold cursor-pointer"
                             >
                               <option value="">-- Selecione {selectedVehicle.tipoUnidade === 'Cavalo' ? 'a Carreta/Porta Container' : 'o Cavalo'} Disponível --</option>
                               {availableCouplings.map(item => (
@@ -1219,10 +1219,10 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                   {/* DOCUMENTS APPLICABILITY CONFIG (Requirement 4) */}
                   <div className="bg-slate-50 p-4 border border-slate-200 rounded-xl space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                      <h4 className="font-bold text-blue-600 uppercase tracking-widest text-[10px]">
+                      <h4 className="font-bold text-blue-600 uppercase tracking-widest text-xs">
                         Controle de Aplicabilidade Regulamentar
                       </h4>
-                      <span className="text-[10px] text-slate-450 italic font-medium">
+                      <span className="text-xs text-slate-450 italic font-medium">
                         Selecione as obrigatoriedades desta placa
                       </span>
                     </div>
@@ -1246,14 +1246,14 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                                 <label htmlFor={`apply-checkbox-${doc.id}`} className="font-bold text-slate-800 text-xs block cursor-pointer">
                                   {doc.tipoDocumento}
                                 </label>
-                                <span className="text-[10px] text-slate-450 leading-none block font-medium">
+                                <span className="text-xs text-slate-450 leading-none block font-medium">
                                   {doc.aplicavel ? 'Documentação obrigatória' : 'Não exigido'}
                                 </span>
                               </div>
                             </div>
 
                             {/* Badge showing calculated status */}
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold border ${
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
                               doc.statusDocumento === 'Não aplicável' ? 'bg-slate-100 border-slate-200 text-slate-450' :
                               doc.statusDocumento === 'Válido' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                               doc.statusDocumento === 'Atenção' ? 'bg-amber-50 text-amber-700 border-amber-200' :
@@ -1274,11 +1274,11 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               {/* SECTION: ENSEMBLE COMPLIANCE OVERVIEW (If Twin Coupled) */}
               {selectedLinkedVehicle && (
                 <div className="mt-6 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
-                  <h4 className="font-bold text-blue-600 uppercase tracking-widest text-[10px] pb-1.5 border-b border-slate-200">
+                  <h4 className="font-bold text-blue-600 uppercase tracking-widest text-xs pb-1.5 border-b border-slate-200">
                     Visão Geral do Conjunto Completo ({selectedVehicle.placa} + {selectedLinkedVehicle.placa})
                   </h4>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2 text-xs">
                       <p className="text-slate-600 font-medium">Total de Documentos Coletivos: <strong className="text-slate-900">{ensembleDocs.length}</strong></p>
                       <p className="text-slate-600 font-medium">Documentos Aplicáveis Ativos: <strong className="text-slate-900">{ensembleDocs.filter(d => d.aplicavel).length}</strong></p>
@@ -1288,12 +1288,12 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                       <p className="text-xs text-slate-500 font-medium">Pendências ativas no conjunto:</p>
                       
                       {ensembleDocs.filter(d => d.aplicavel && (d.statusDocumento === 'Vencido' || d.statusDocumento === 'Crítico')).length === 0 ? (
-                        <div className="p-2 bg-emerald-50 text-emerald-700 text-[11px] rounded-lg border border-emerald-200 flex items-center gap-1.5 font-bold">
+                        <div className="p-2 bg-emerald-50 text-emerald-700 text-sm rounded-lg border border-emerald-200 flex items-center gap-1.5 font-bold">
                           <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                           Todo o conjunto está regulamentar e liberado para rodagem!
                         </div>
                       ) : (
-                        <div className="p-2 bg-rose-50 text-rose-700 text-[11px] rounded-lg border border-rose-200 flex items-center gap-1.5 font-bold">
+                        <div className="p-2 bg-rose-50 text-rose-700 text-sm rounded-lg border border-rose-200 flex items-center gap-1.5 font-bold">
                           <AlertTriangle className="h-4 w-4 text-rose-600" />
                           Existem pendências impeditivas de tráfego no conjunto cavalo+reboque.
                         </div>
@@ -1305,7 +1305,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
               {/* AUDIT LOG FOR THIS LICENSE PLATE */}
               <div className="mt-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
-                <h4 className="font-bold text-blue-600 uppercase tracking-widest text-[10px] pb-2 border-b border-slate-200 mb-3 flex items-center gap-1.5">
+                <h4 className="font-bold text-blue-600 uppercase tracking-widest text-xs pb-2 border-b border-slate-200 mb-3 flex items-center gap-1.5">
                   <ClipboardList className="h-4 w-4" />
                   Logs de Alterações e Auditoria da Placa {selectedVehicle.placa}
                 </h4>
@@ -1324,7 +1324,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                           <div className="space-y-1">
                             {/* Action badge */}
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded border ${
+                              <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded border ${
                                 log.tipoAcao === 'criação' ? 'bg-teal-50 text-teal-700 border-teal-200' :
                                 log.tipoAcao === 'renovação' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
                                 log.tipoAcao === 'exclusão' ? 'bg-rose-50 text-rose-700 border-rose-200' :
@@ -1337,18 +1337,18 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                               </span>
                             </div>
 
-                            <p className="text-[11px] text-slate-600 font-sans font-medium">
+                            <p className="text-sm text-slate-600 font-sans font-medium">
                               De <strong className="text-slate-400 line-through">{log.valorAnterior || 'vazio'}</strong> para <strong className="text-blue-600 font-bold">{log.valorNovo}</strong>
                             </p>
 
                             {log.observacao && (
-                              <p className="text-[11px] text-slate-500 italic pl-2 border-l-2 border-slate-200">
+                              <p className="text-sm text-slate-500 italic pl-2 border-l-2 border-slate-200">
                                 Justificativa: "{log.observacao}"
                               </p>
                             )}
                           </div>
 
-                          <div className="text-[10px] text-slate-400 shrink-0 text-right">
+                          <div className="text-xs text-slate-400 shrink-0 text-right">
                             <span className="flex items-center justify-end gap-1 font-bold text-slate-600">
                               <User className="h-3 w-3 shrink-0" />
                               {log.usuarioNome}
@@ -1387,7 +1387,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
             animate={{ scale: 1, opacity: 1 }}
             className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 font-sans text-xs"
           >
-            <div className="flex items-center gap-3 border-b border-slate-100 pb-3 mb-4">
+            <div className="flex items-center gap-4 border-b border-slate-100 pb-3 mb-4">
               <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
                 <Trash2 className="h-5 w-5" />
               </div>
@@ -1400,7 +1400,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               Tem certeza que deseja excluir permanentemente o veículo <strong className="text-slate-900 font-bold">{deleteConfirmVehicle.placa}</strong>? Isso removerá também todos os documentos associados. Esta ação não poderá ser desfeita.
             </p>
 
-            <div className="flex justify-end gap-3.5 pt-2">
+            <div className="flex justify-end gap-4 pt-2">
               <button
                 onClick={() => setDeleteConfirmVehicle(null)}
                 className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl border border-slate-200 shadow-xs cursor-pointer transition-colors"
@@ -1424,7 +1424,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-sm bg-white border border-slate-200 rounded-2xl shadow-2xl p-5 font-sans text-xs text-center"
+            className="w-full max-w-sm bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 font-sans text-xs text-center"
           >
             <div className="mx-auto w-12 h-12 flex items-center justify-center text-amber-500 bg-amber-50 rounded-full mb-3">
               <AlertTriangle className="h-6 w-6" />

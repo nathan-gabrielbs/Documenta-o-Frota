@@ -217,9 +217,9 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
     <div className="space-y-6">
       
       {/* Header title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-slate-200 pb-5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-1 flex items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-1 flex items-center gap-2">
             <ClipboardList className="text-blue-600 h-6 w-6" />
             Emissor de Relatórios e Auditorias
           </h1>
@@ -235,22 +235,22 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
       </div>
 
       {/* Structured multi-filter query block */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
           <Layers className="h-4 w-4 text-blue-600" />
           Gerador de Consulta Avançada de Frota
         </h3>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 text-xs">
           {/* Company */}
           {!selectedEmpresaGlobal && (
             <div>
-              <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-[10px]">Empresa da Frota</span>
+              <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Empresa da Frota</span>
               <select
                 id="q-company"
                 value={filterEmpresa}
                 onChange={(e) => setFilterEmpresa(e.target.value)}
-                className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-9 text-xs font-semibold cursor-pointer"
+                className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
               >
                 <option value="">Todas</option>
                 {companies.map(c => <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companies)}</option>)}
@@ -260,12 +260,12 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* Unit Type */}
           <div>
-            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-[10px]">Tipo de Unidade</span>
+            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Tipo de Unidade</span>
             <select
               id="q-type"
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-9 text-xs font-semibold cursor-pointer"
+              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
             >
               <option value="">Todos</option>
               <option value="Cavalo">Cavalo</option>
@@ -280,12 +280,12 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* Document Type */}
           <div>
-            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-[10px]">Tipo de Documento</span>
+            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Tipo de Documento</span>
             <select
               id="q-doc-type"
               value={filterDocType}
               onChange={(e) => setFilterDocType(e.target.value)}
-              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-9 text-xs font-semibold cursor-pointer"
+              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
             >
               <option value="">Todos</option>
               <option value="INMETRO">INMETRO</option>
@@ -300,12 +300,12 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* Status */}
           <div>
-            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-[10px]">Status Documento</span>
+            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Status Documento</span>
             <select
               id="q-status"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-9 text-xs font-semibold cursor-pointer"
+              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
             >
               <option value="">Todos</option>
               <option value="Válido">Válido</option>
@@ -318,12 +318,12 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* Plate Search */}
           <div>
-            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-[10px]">Placa Específica</span>
+            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Placa Específica</span>
             <input
               id="q-plate"
               type="text"
               placeholder="Ex: ABC1D23"
-              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-9 text-xs font-medium font-mono"
+              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-medium font-mono"
               value={filterPlaca}
               onChange={(e) => setFilterPlaca(e.target.value)}
             />
@@ -331,12 +331,12 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* Applicability selector */}
           <div>
-            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-[10px]">Aplicabilidade</span>
+            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Aplicabilidade</span>
             <select
               id="q-app"
               value={filterApplicableOnly}
               onChange={(e) => setFilterApplicableOnly(e.target.value as any)}
-              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-9 text-xs font-semibold cursor-pointer"
+              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
             >
               <option value="all">Documentos gerais (Todos)</option>
               <option value="applicable">Somente aplicáveis no veículo</option>
@@ -346,12 +346,12 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* User who generated last change */}
           <div>
-            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-[10px]">Últmo usuário modificador</span>
+            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Últmo usuário modificador</span>
             <select
               id="q-user"
               value={filterUserModified}
               onChange={(e) => setFilterUserModified(e.target.value)}
-              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-9 text-xs font-semibold cursor-pointer"
+              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
             >
               <option value="">Todos os usuários</option>
               {modifyingUsersList.map(usr => <option key={usr} value={usr}>{usr}</option>)}
@@ -360,11 +360,11 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* Date Picker Start */}
           <div>
-            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-[10px]">Vencimento inicial</span>
+            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Vencimento inicial</span>
             <input
               id="q-start-date"
               type="date"
-              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-855 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-9 text-xs font-semibold cursor-pointer"
+              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-855 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
               value={filterStartDate}
               onChange={(e) => setFilterStartDate(e.target.value)}
             />
@@ -397,22 +397,22 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Col 1: General Results Aggregations of Query */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
           <h3 className="text-xs font-bold uppercase tracking-widest text-slate-800 border-b border-slate-100 pb-3">
             Estatísticas do Filtro Emitido
           </h3>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center shadow-xs">
-              <span className="text-[10px] text-slate-500 block font-bold tracking-tight uppercase">ENCONTRADOS</span>
+              <span className="text-xs text-slate-500 block font-bold tracking-tight uppercase">ENCONTRADOS</span>
               <strong className="text-xl text-slate-900 font-extrabold">{reportStats.total}</strong>
-              <span className="text-[9px] text-slate-400 block font-bold">documentos aplicáveis</span>
+              <span className="text-xs text-slate-400 block font-bold">documentos aplicáveis</span>
             </div>
 
             <div className="p-3 bg-blue-50 border border-blue-250 rounded-xl text-center shadow-xs">
-              <span className="text-[10px] text-blue-600 block font-bold tracking-tight uppercase">CONFORMIDADE</span>
+              <span className="text-xs text-blue-600 block font-bold tracking-tight uppercase">CONFORMIDADE</span>
               <strong className="text-xl text-blue-600 font-extrabold">{reportStats.generalCompliance}%</strong>
-              <span className="text-[9px] text-blue-400 block font-bold">taxa aplicável</span>
+              <span className="text-xs text-blue-400 block font-bold">taxa aplicável</span>
             </div>
           </div>
 
@@ -439,14 +439,14 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
         </div>
 
         {/* Col 2: Segmented compliance ratings (Company & Unit type summaries) */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
           <h3 className="text-xs font-bold uppercase tracking-widest text-slate-800 border-b border-slate-100 pb-3">
             Conformidades Corporativas Gerais
           </h3>
 
           {/* Breakdown by Company */}
           <div className="space-y-2.5">
-            <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block">
+            <span className="text-xs uppercase font-bold tracking-wider text-slate-400 block">
               1. Por Empresa da Frota:
             </span>
 
@@ -454,7 +454,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
               <div key={comp.id} className="flex items-center justify-between text-xs font-semibold">
                 <span className="text-slate-700 truncate max-w-[170px]">{comp.nome}</span>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-400 font-medium">{comp.docTotal} docs</span>
+                  <span className="text-xs text-slate-400 font-medium">{comp.docTotal} docs</span>
                   <span className={`font-bold ${
                     comp.compliance >= 90 ? 'text-emerald-600' :
                     comp.compliance >= 70 ? 'text-amber-550' : 'text-rose-600'
@@ -468,7 +468,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* Breakdown by Unit type */}
           <div className="space-y-2.5 pt-3 border-t border-slate-100">
-            <span className="text-[9px] uppercase font-bold tracking-wider text-slate-400 block">
+            <span className="text-xs uppercase font-bold tracking-wider text-slate-400 block">
               2. Por Tipo de Unidade:
             </span>
 
@@ -482,7 +482,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
         </div>
 
         {/* Col 3: Priority alerts - plates with missing properties */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
           <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900 border-b border-slate-100 pb-3">
             Placas com Pendências Impeditivas
           </h3>
@@ -496,13 +496,13 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
               {problematicPlates.map(item => (
                 <div key={item.plate} className="text-xs p-2 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between shadow-xs">
                   <div className="space-y-0.5">
-                    <span className="font-mono font-bold text-slate-900 bg-white border border-slate-200 shadow-xs px-1.5 py-0.5 rounded text-[11px]">
+                    <span className="font-mono font-bold text-slate-900 bg-white border border-slate-200 shadow-xs px-1.5 py-0.5 rounded text-sm">
                       {item.plate}
                     </span>
-                    <span className="text-[9px] block text-slate-500 font-bold mt-1 uppercase tracking-tight">{item.company}</span>
+                    <span className="text-xs block text-slate-500 font-bold mt-1 uppercase tracking-tight">{item.company}</span>
                   </div>
 
-                  <div className="text-right space-y-0.5 text-[10px] font-bold">
+                  <div className="text-right space-y-0.5 text-xs font-bold">
                     {item.expiredCount > 0 && (
                       <span className="block text-rose-605 font-bold">{item.expiredCount} vencidos</span>
                     )}
@@ -519,7 +519,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
       </div>
 
       {/* MASTER SYSTEM AUDIT LOGS TRAIL SECTION */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
         <h3 className="text-xs font-bold uppercase tracking-widest text-slate-800 border-b border-slate-100 pb-4 mb-4 flex items-center gap-1.5">
           <ClipboardList className="h-4.5 w-4.5 text-blue-600" />
           Relação Histórica de Documentos Renovados / Alterações Gerais
@@ -535,35 +535,35 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
               const logDateStr = new Date(log.dataHora).toLocaleDateString('pt-BR');
               const logTimeStr = new Date(log.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
               return (
-                <div key={log.id} className="text-xs p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-col md:flex-row justify-between gap-4 shadow-xs hover:bg-slate-100/40 transition-colors">
+                <div key={log.id} className="text-xs p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-col md:flex-row justify-between gap-6 shadow-xs hover:bg-slate-100/40 transition-colors">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono bg-white border border-slate-200 text-slate-800 px-2 py-0.5 rounded font-bold text-[11px] shadow-xs">
+                      <span className="font-mono bg-white border border-slate-200 text-slate-800 px-2 py-0.5 rounded font-bold text-sm shadow-xs">
                         {log.placa}
                       </span>
-                      <span className="text-[9px] font-bold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 rounded uppercase">
+                      <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 rounded uppercase">
                         {obterNomeEmpresa(log.empresaId, companies)}
                       </span>
                       <span className="font-bold text-slate-800">{log.campoAlterado}</span>
                     </div>
 
-                    <p className="text-[11px] text-slate-600 font-semibold">
+                    <p className="text-sm text-slate-600 font-semibold">
                       Modificação: De <span className="text-slate-400 line-through font-normal">{log.valorAnterior || 'Em branco'}</span> para <strong className="text-blue-600 font-extrabold">{log.valorNovo}</strong>
                     </p>
 
                     {log.observacao && (
-                      <p className="text-[11px] text-slate-500 italic pl-2 border-l-2 border-blue-400 mt-1 font-semibold">
+                      <p className="text-sm text-slate-500 italic pl-2 border-l-2 border-blue-400 mt-1 font-semibold">
                         Justificativa inserida: "{log.observacao}"
                       </p>
                     )}
                   </div>
 
-                  <div className="text-[10px] text-slate-500 md:text-right shrink-0 font-medium">
+                  <div className="text-xs text-slate-500 md:text-right shrink-0 font-medium">
                     <div className="flex items-center md:justify-end gap-1 font-bold text-slate-700">
                       <User className="h-3 w-3 inline text-slate-400" />
                       {log.usuarioNome}
                     </div>
-                    <span className="block mt-0.5 font-mono text-[9px] text-slate-400">
+                    <span className="block mt-0.5 font-mono text-xs text-slate-400">
                       Modificado em {logDateStr} às {logTimeStr}
                     </span>
                   </div>

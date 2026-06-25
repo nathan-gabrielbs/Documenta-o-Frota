@@ -164,7 +164,7 @@ export default function App() {
 
           <form onSubmit={handlePasswordChangeSubmit} className="space-y-4">
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5" htmlFor="new-password">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5" htmlFor="new-password">
                 Nova Senha (mín. 4 caracteres)
               </label>
               <input
@@ -179,7 +179,7 @@ export default function App() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-1.5" htmlFor="confirm-password">
+              <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5" htmlFor="confirm-password">
                 Confirmar Nova Senha
               </label>
               <input
@@ -219,11 +219,11 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col selection:bg-blue-600 selection:text-white">
       
       {/* Primary Top Header */}
-      <header className="sticky top-0 z-30 bg-white border-b border-slate-200/80 px-6 py-3 shrink-0 shadow-xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+      <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200/80 px-6 xl:px-10 py-3 shrink-0 shadow-xs">
+        <div className="w-full max-w-[1680px] mx-auto flex items-center justify-between gap-6">
           
           {/* Logo Brand Brand */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <div className="p-2 bg-blue-600 rounded-xl shadow-xs">
               <Truck className="h-5.5 w-5.5 text-white" />
             </div>
@@ -231,14 +231,14 @@ export default function App() {
               <span className="font-extrabold tracking-tight text-slate-900 block text-sm sm:text-base leading-tight uppercase font-sans">
                 POTENCIAL transporte
               </span>
-              <span className="text-[10px] text-blue-600 font-bold uppercase tracking-wider block">
+              <span className="text-xs text-blue-600 font-bold uppercase tracking-wider block">
                 Conformidade de Documentos e Frotas
               </span>
             </div>
           </div>
 
           {/* User Meta Indicator & Session controllers */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-6">
             
             {/* Global Corporate Lens Tag */}
             {selectedEmpresaGlobal && (
@@ -255,7 +255,7 @@ export default function App() {
               </div>
               <div className="text-left leading-none">
                 <span className="text-xs font-bold text-slate-800 block">{sessionUser.nome}</span>
-                <span className="text-[10px] text-slate-500 block pt-0.5 font-semibold">
+                <span className="text-xs text-slate-500 block pt-0.5 font-semibold">
                   {sessionUser.perfil} {sessionUser.empresaId ? `• ${formatarNomeEmpresaId(sessionUser.empresaId)}` : ''}
                 </span>
               </div>
@@ -276,9 +276,9 @@ export default function App() {
       </header>
 
       {isOfflineMode && (
-        <div id="offline-mode-banner" className="bg-amber-500 text-white px-6 py-2.5 text-center text-xs font-semibold font-sans flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-3 shadow-xs shrink-0 select-none">
+        <div id="offline-mode-banner" className="bg-amber-500 text-white px-6 py-2.5 text-center text-xs font-semibold font-sans flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-4 shadow-xs shrink-0 select-none">
           <div className="flex items-center gap-1.5">
-            <span className="inline-block bg-white text-amber-600 rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase shadow-xs">
+            <span className="inline-block bg-white text-amber-600 rounded-full px-2 py-0.5 text-xs font-extrabold uppercase shadow-xs">
               Modo Local Ativado
             </span>
             <span>
@@ -294,7 +294,7 @@ export default function App() {
                 alert("Limpeza efetuada! Todos os documentos foram zerados com sucesso no seu navegador.");
               }
             }}
-            className="px-2 py-0.5 bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold rounded border border-amber-400 transition-colors cursor-pointer shadow-xs ml-0 sm:ml-2"
+            className="px-2 py-0.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded border border-amber-400 transition-colors cursor-pointer shadow-xs ml-0 sm:ml-2"
           >
             Limpar Todos os Documentos em Branco
           </button>
@@ -302,19 +302,19 @@ export default function App() {
       )}
 
       {/* Navigation Layout frame */}
-      <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col md:flex-row p-4 sm:p-6 gap-6 relative z-10">
+      <div className="w-full flex-1 flex flex-col md:flex-row gap-0 relative z-10">
         
         {/* Navigation Sidebar */}
-        <aside className="w-full md:w-64 shrink-0 bg-white border border-slate-200 rounded-2xl flex flex-col p-5 gap-1.5 shadow-xs">
+        <aside className="w-full md:w-72 shrink-0 bg-white border-r border-slate-200 flex flex-col p-6 gap-2 shadow-xs md:min-h-[calc(100vh-4rem)]">
           
-          <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-1.5 select-none font-sans">
+          <div className="text-xs font-bold text-slate-400 uppercase tracking-wider px-3 mb-1.5 select-none font-sans">
             Navegação Principal
           </div>
 
           <button
             id="nav-btn-dashboard"
             onClick={() => { setActiveTab('dashboard'); setSharedPlateSearch(''); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all border border-transparent outline-none cursor-pointer ${
+            className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold transition-all border border-transparent outline-none cursor-pointer ${
               activeTab === 'dashboard'
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -327,7 +327,7 @@ export default function App() {
           <button
             id="nav-btn-vehicles"
             onClick={() => { setActiveTab('vehicles'); setSharedPlateSearch(''); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all border border-transparent outline-none cursor-pointer ${
+            className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold transition-all border border-transparent outline-none cursor-pointer ${
               activeTab === 'vehicles'
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -340,7 +340,7 @@ export default function App() {
           <button
             id="nav-btn-documents"
             onClick={() => { setActiveTab('documents'); setSharedPlateSearch(''); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all border border-transparent outline-none cursor-pointer ${
+            className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold transition-all border border-transparent outline-none cursor-pointer ${
               activeTab === 'documents'
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -353,7 +353,7 @@ export default function App() {
           <button
             id="nav-btn-reports"
             onClick={() => { setActiveTab('reports'); setSharedPlateSearch(''); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all border border-transparent outline-none cursor-pointer ${
+            className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold transition-all border border-transparent outline-none cursor-pointer ${
               activeTab === 'reports'
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -368,7 +368,7 @@ export default function App() {
           <button
             id="nav-btn-users"
             onClick={() => { setActiveTab('users'); setSharedPlateSearch(''); }}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold transition-all border border-transparent outline-none cursor-pointer ${
+            className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-sm font-bold transition-all border border-transparent outline-none cursor-pointer ${
               activeTab === 'users'
                 ? 'bg-blue-600 text-white shadow-xs'
                 : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
@@ -380,11 +380,11 @@ export default function App() {
 
           {/* Quick Stats Sidebar footer card */}
           <div className="mt-auto hidden md:block p-4 border border-slate-200 bg-slate-50 rounded-xl space-y-2 shadow-xs">
-            <span className="flex items-center gap-1.5 text-[9px] text-blue-600 font-bold uppercase tracking-wider">
+            <span className="flex items-center gap-1.5 text-xs text-blue-600 font-bold uppercase tracking-wider">
               <Shield className="h-3.5 w-3.5" />
               Sessão Registrada
             </span>
-            <div className="text-[11px] text-slate-500 leading-relaxed font-sans font-medium">
+            <div className="text-sm text-slate-500 leading-relaxed font-sans font-medium">
               Logado: <strong className="text-slate-800 font-bold">{sessionUser.nome}</strong>.<br />
               Perfil: <strong className="text-slate-800 font-bold">{sessionUser.perfil}</strong>.
             </div>
@@ -392,7 +392,8 @@ export default function App() {
         </aside>
 
         {/* Core Main Area */}
-        <main className="flex-1 bg-transparent p-0 relative min-w-0">
+        <main className="flex-1 min-w-0 px-6 xl:px-10 py-6 bg-transparent relative">
+          <div className="w-full max-w-[1680px] mx-auto">
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab + (sharedPlateSearch ? `-${sharedPlateSearch}` : '')}
@@ -440,12 +441,13 @@ export default function App() {
               )}
             </motion.div>
           </AnimatePresence>
+          </div>
         </main>
 
       </div>
 
       {/* Universal Footer section */}
-      <footer className="bg-white border-t border-slate-200 py-3.5 px-6 text-center text-[10px] text-slate-500 shrink-0 font-mono select-none">
+      <footer className="bg-white border-t border-slate-200 py-3.5 px-6 text-center text-xs text-slate-500 shrink-0 font-mono select-none">
         POTENCIAL TRANSPORTE S.A. © {new Date().getFullYear()} • Sistema Integrado de Compliance • Local Time: 2026-06-22 
       </footer>
 

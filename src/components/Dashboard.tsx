@@ -295,9 +295,9 @@ const statsByCompany = useMemo(() => {
     <div className="space-y-6">
       
       {/* Top Welcome Title & Slogan */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-200 pb-5">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900 mb-1 flex items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-1 flex items-center gap-2">
             <Compass className="text-blue-600 h-6 w-6" />
             Painel Geral de Conformidade
           </h1>
@@ -306,7 +306,7 @@ const statsByCompany = useMemo(() => {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-4">
           {/* Global Company Filter shortcut */}
           <div className="flex items-center gap-2 text-xs">
             <span className="text-slate-500 font-medium">Lente de Divisão:</span>
@@ -334,11 +334,11 @@ const statsByCompany = useMemo(() => {
       </div>
 
       {/* Segmented View Selectors */}
-      <div className="p-1.5 bg-slate-200/55 border border-slate-200/80 w-fit rounded-xl flex flex-wrap gap-1">
+      <div className="p-1.5 bg-slate-200/55 border border-slate-200/80 w-full rounded-xl flex flex-wrap gap-1">
         <button
           id="tab-view-geral"
           onClick={() => setActiveTab('geral')}
-          className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+          className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
             activeTab === 'geral' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -347,7 +347,7 @@ const statsByCompany = useMemo(() => {
         <button
           id="tab-view-empresa"
           onClick={() => setActiveTab('empresa')}
-          className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+          className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
             activeTab === 'empresa' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -356,7 +356,7 @@ const statsByCompany = useMemo(() => {
         <button
           id="tab-view-tipo"
           onClick={() => setActiveTab('tipo')}
-          className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+          className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
             activeTab === 'tipo' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -365,7 +365,7 @@ const statsByCompany = useMemo(() => {
         <button
           id="tab-view-placa"
           onClick={() => setActiveTab('placa')}
-          className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+          className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
             activeTab === 'placa' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -374,7 +374,7 @@ const statsByCompany = useMemo(() => {
         <button
           id="tab-view-conjunto"
           onClick={() => setActiveTab('conjunto')}
-          className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer ${
+          className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
             activeTab === 'conjunto' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
           }`}
         >
@@ -383,7 +383,7 @@ const statsByCompany = useMemo(() => {
       </div>
 
       {/* Conditional Sub-filters Bar */}
-      <div className="p-3 bg-white border border-slate-200 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs shadow-sm">
+      <div className="p-4 bg-white border border-slate-200 rounded-xl flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm shadow-sm">
         <span className="text-slate-500 italic">
           {selectLayoutHelp()}
         </span>
@@ -397,7 +397,7 @@ const statsByCompany = useMemo(() => {
                 id="tab-filter-company"
                 value={selectedEmpresaLocal}
                 onChange={(e) => setSelectedEmpresaLocal(e.target.value)}
-                className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all font-medium shadow-sm cursor-pointer"
+                className="bg-white border border-slate-200 px-3 py-2 rounded-lg text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all font-medium shadow-sm cursor-pointer"
               >
                 {companies.map(c => (
                   <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companies)}</option>
@@ -413,7 +413,7 @@ const statsByCompany = useMemo(() => {
                 id="tab-filter-type"
                 value={selectedTipoLocal}
                 onChange={(e) => setSelectedTipoLocal(e.target.value)}
-                className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all font-medium shadow-sm cursor-pointer"
+                className="bg-white border border-slate-200 px-3 py-2 rounded-lg text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all font-medium shadow-sm cursor-pointer"
               >
                 <option value="Cavalo">Cavalo</option>
                 <option value="Carreta">Carreta</option>
@@ -433,7 +433,7 @@ const statsByCompany = useMemo(() => {
                 id="tab-filter-plate"
                 value={selectedPlacaLocal}
                 onChange={(e) => setSelectedPlacaLocal(e.target.value)}
-                className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all font-mono shadow-sm cursor-pointer"
+                className="bg-white border border-slate-200 px-3 py-2 rounded-lg text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all font-mono shadow-sm cursor-pointer"
               >
                 {allPlates.length === 0 ? (
                   <option value="">Sem placas no filtro</option>
@@ -453,7 +453,7 @@ const statsByCompany = useMemo(() => {
                 id="tab-filter-composition"
                 value={selectedConjuntoLocal}
                 onChange={(e) => setSelectedConjuntoLocal(e.target.value)}
-                className="bg-white border border-slate-200 px-2.5 py-1.5 rounded-lg text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all font-mono shadow-sm cursor-pointer"
+                className="bg-white border border-slate-200 px-3 py-2 rounded-lg text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all font-mono shadow-sm cursor-pointer"
               >
                 {coupledSets.length === 0 ? (
                   <option value="">Nenhum conjunto acoplado ativo</option>
@@ -474,19 +474,19 @@ const statsByCompany = useMemo(() => {
       </div>
 
       {/* Grid of 4 Core KPIs */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         
         {/* Compliance Circle Rate */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center justify-between relative overflow-hidden shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 min-h-[150px] flex items-center justify-between relative overflow-hidden shadow-sm">
           <div className="space-y-1">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest">
+            <span className="text-sm font-semibold text-slate-500 uppercase tracking-widest">
               Índice Conformidade
             </span>
             <div className="flex items-baseline gap-1.5">
-              <span className="text-3xl font-extrabold text-slate-900">{metrics.complianceRate}%</span>
-              <span className="text-[10px] text-blue-600 font-bold uppercase tracking-tighter">no filtro</span>
+              <span className="text-4xl font-extrabold text-slate-900">{metrics.complianceRate}%</span>
+              <span className="text-xs text-blue-600 font-bold uppercase tracking-tighter">no filtro</span>
             </div>
-            <p className="text-[11px] text-slate-500 leading-tight">
+            <p className="text-sm text-slate-500 leading-tight">
               {metrics.totalAplicaveis} documentos aplicáveis avaliados.
             </p>
           </div>
@@ -512,16 +512,16 @@ const statsByCompany = useMemo(() => {
         </div>
 
         {/* Total Vehicles count details */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 min-h-[150px] flex items-center justify-between shadow-sm">
           <div className="space-y-2 w-full">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-widest block">
+            <span className="text-sm font-semibold text-slate-500 uppercase tracking-widest block">
               Frota Vinculada
             </span>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-slate-900">{metrics.totalVehicles}</span>
+              <span className="text-4xl font-extrabold text-slate-900">{metrics.totalVehicles}</span>
               <span className="text-xs text-slate-500">Veículos</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100 text-[10px] text-slate-500">
+            <div className="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100 text-xs text-slate-500">
               <div>Cavalos: <strong className="text-slate-800">{metrics.totalCavalos}</strong></div>
               <div>Carretas: <strong className="text-slate-800">{metrics.totalCarretas}</strong></div>
             </div>
@@ -532,15 +532,15 @@ const statsByCompany = useMemo(() => {
         </div>
 
         {/* High Risk Critical/Expired */}
-        <div id="kpi-critical" className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+        <div id="kpi-critical" className="bg-white border border-slate-200 rounded-2xl p-6 min-h-[150px] flex items-center justify-between shadow-sm">
           <div className="space-y-1">
-            <span className="text-[11px] font-semibold text-rose-600 uppercase tracking-widest block">
+            <span className="text-sm font-semibold text-rose-600 uppercase tracking-widest block">
               Alerta Crítico / Vencidos
             </span>
-            <span className="text-3xl font-extrabold text-slate-900">
+            <span className="text-4xl font-extrabold text-slate-900">
               {metrics.criticos + metrics.vencidos}
             </span>
-            <p className="text-[11px] text-slate-500 leading-tight">
+            <p className="text-sm text-slate-500 leading-tight">
               <strong className="text-rose-600 font-semibold">{metrics.vencidos} já vencidos</strong>, {metrics.criticos} vencem em 30 dias.
             </p>
           </div>
@@ -550,15 +550,15 @@ const statsByCompany = useMemo(() => {
         </div>
 
         {/* Warning Expirations (31-60 days) */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-2xl p-6 min-h-[150px] flex items-center justify-between shadow-sm">
           <div className="space-y-1">
-            <span className="text-[11px] font-semibold text-amber-600 uppercase tracking-widest block">
+            <span className="text-sm font-semibold text-amber-600 uppercase tracking-widest block">
               Documentos em Atenção
             </span>
-            <span className="text-3xl font-extrabold text-slate-900">
+            <span className="text-4xl font-extrabold text-slate-900">
               {metrics.atencao}
             </span>
-            <p className="text-[11px] text-slate-500 leading-tight">
+            <p className="text-sm text-slate-500 leading-tight">
               Vencimentos programados para 31 a 60 dias.
             </p>
           </div>
@@ -570,14 +570,14 @@ const statsByCompany = useMemo(() => {
       </div>
 
       {/* Segmented Document Compliance Bar Distribution Indicator */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700 mb-4">
           Distribuição dos Status de Documentos Exigíveis
         </h3>
         {/* Compact Stacked Percent Block */}
         <div className="h-4 bg-slate-100 rounded-full overflow-hidden flex select-none mb-3">
           {metrics.totalAplicaveis === 0 ? (
-            <div className="w-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-400">
+            <div className="w-full bg-slate-100 flex items-center justify-center text-xs text-slate-400">
               Nenhum documento aplicável registrado para este filtro.
             </div>
           ) : (
@@ -607,8 +607,8 @@ const statsByCompany = useMemo(() => {
         </div>
 
         {/* Legend */}
-        <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex flex-wrap gap-4">
+        <div className="flex flex-wrap items-center justify-between gap-4 text-xs">
+          <div className="flex flex-wrap gap-6">
             <span className="flex items-center gap-1.5 text-slate-600">
               <span className="w-2.5 h-2.5 bg-emerald-500 rounded-full block"></span>
               Válidos: <strong className="text-slate-950">{metrics.validos}</strong>
@@ -627,23 +627,23 @@ const statsByCompany = useMemo(() => {
             </span>
           </div>
 
-          <div className="text-[11px] text-slate-500 italic">
+          <div className="text-sm text-slate-500 italic">
             *Docs marcados como não aplicáveis/isentos são desconsiderados deste gráfico e índice de conformidade.
           </div>
         </div>
       </div>
 
       {/* Main Corporate Indicators & Rankings by Company */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         
         {/* Left Col: Indicators Separated by Empresa (Crucial Corporate Requirement) */}
-        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
+        <div className="xl:col-span-2 bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
               <Building2 className="text-blue-600 h-4.5 w-4.5" />
               Indicadores por Empresa da Frota
             </h3>
-            <span className="text-[10px] uppercase font-bold tracking-widest text-blue-600 bg-blue-50 px-20 py-0.5 rounded">
+            <span className="text-xs uppercase font-bold tracking-widest text-blue-600 bg-blue-50 px-20 py-0.5 rounded">
               Visão Corporativa
             </span>
           </div>
@@ -669,7 +669,7 @@ const statsByCompany = useMemo(() => {
                     <span className="w-2 h-2 bg-blue-600 rounded-full" />
                     <span className="font-bold text-slate-800 text-xs sm:text-sm">{comp.company}</span>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4">
                     <span className="text-xs text-slate-500">Conformidade:</span>
                     <span className={`text-xs font-bold px-2 py-0.5 rounded ${
                       comp.compliance >= 90 ? 'text-emerald-700 bg-emerald-50 shadow-sm' :
@@ -680,19 +680,19 @@ const statsByCompany = useMemo(() => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-3 text-center pt-2 border-t border-slate-200/60">
+                <div className="grid grid-cols-3 gap-4 text-center pt-2 border-t border-slate-200/60">
                   <div>
-                    <span className="block text-[10px] text-slate-500 uppercase font-medium">Frota</span>
+                    <span className="block text-xs text-slate-500 uppercase font-medium">Frota</span>
                     <span className="text-xs font-semibold text-slate-700">{comp.vehiclesCount} un.</span>
                   </div>
                   <div>
-                    <span className="block text-[10px] text-rose-600 uppercase font-medium">Vencidos</span>
+                    <span className="block text-xs text-rose-600 uppercase font-medium">Vencidos</span>
                     <span className={`text-xs font-bold ${comp.vencidos > 0 ? 'text-rose-600' : 'text-slate-400'}`}>
                       {comp.vencidos}
                     </span>
                   </div>
                   <div>
-                    <span className="block text-[10px] text-amber-600 uppercase font-medium">Prazo Crítico</span>
+                    <span className="block text-xs text-amber-600 uppercase font-medium">Prazo Crítico</span>
                     <span className="text-xs font-semibold text-amber-600">{comp.criticos}</span>
                   </div>
                 </div>
@@ -701,7 +701,7 @@ const statsByCompany = useMemo(() => {
           </div>
 
           {/* Quick Filter Reminder */}
-          <p className="text-[10px] text-slate-400 italic mt-2">
+          <p className="text-xs text-slate-400 italic mt-2">
             Clique em "Lente de Divisão" no topo superior direito para analisar apenas uma destas empresas em todo o sistema.
           </p>
         </div>
@@ -710,7 +710,7 @@ const statsByCompany = useMemo(() => {
         <div className="space-y-6">
           
           {/* Top Pending Vehicles Ranking */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
             <h3 className="text-xs font-bold uppercase tracking-widest text-slate-700 border-b border-slate-100 pb-3">
               Maior Acúmulo de Pendências
             </h3>
@@ -728,18 +728,18 @@ const statsByCompany = useMemo(() => {
                         <span className="text-xs font-mono font-bold text-slate-800 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
                           {item.plate}
                         </span>
-                        <span className="text-[9px] px-1 bg-blue-50 text-blue-600 font-medium rounded-sm">
+                        <span className="text-xs px-1 bg-blue-50 text-blue-600 font-medium rounded-sm">
                           {item.company}
                         </span>
                       </div>
-                      <span className="text-[10px] text-slate-500 block truncate max-w-[150px]">
+                      <span className="text-xs text-slate-500 block truncate max-w-[150px]">
                         {item.types.join(' • ')}
                       </span>
                     </div>
                     
                     <button 
                       onClick={() => onNavigateToVehicles(item.plate)}
-                      className="text-[10px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer"
                     >
                       <span className="px-2 py-1 bg-blue-50 rounded-md">
                         {item.count} pend.
@@ -752,7 +752,7 @@ const statsByCompany = useMemo(() => {
           </div>
 
           {/* Core Notification Alert Stream */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 shadow-sm">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
             <h3 className="text-xs font-bold uppercase tracking-widest text-slate-700 border-b border-slate-100 pb-3">
               Notificação de Vencimento Próximos
             </h3>
@@ -769,7 +769,7 @@ const statsByCompany = useMemo(() => {
                     <div key={doc.id} className="text-xs p-2.5 rounded-xl border border-slate-150 bg-slate-50 flex items-start gap-2 justify-between">
                       <div className="space-y-1">
                         <div className="flex items-center gap-1.5 flex-wrap">
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${
                             isVencido ? 'bg-rose-50 text-rose-600 border border-rose-100 shadow-sm' : 'bg-amber-50 text-amber-600 border border-amber-100 shadow-sm'
                           }`}>
                             {doc.tipoDocumento}
@@ -778,7 +778,7 @@ const statsByCompany = useMemo(() => {
                             {doc.placa}
                           </span>
                         </div>
-                        <p className="text-[10px] text-slate-500 font-medium">
+                        <p className="text-xs text-slate-500 font-medium">
                           Vencimento: <strong className={isVencido ? 'text-rose-600' : 'text-slate-700'}>
                             {formatarDataBR(doc.dataVencimento)}
                           </strong>
@@ -787,7 +787,7 @@ const statsByCompany = useMemo(() => {
 
                       <button
                         onClick={() => onNavigateToDocuments(doc.placa)}
-                        className="p-1 px-2 border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-[10px] text-blue-600 font-semibold rounded-md flex items-center gap-1 cursor-pointer transition-colors"
+                        className="p-1 px-2 border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50 text-xs text-blue-600 font-semibold rounded-md flex items-center gap-1 cursor-pointer transition-colors"
                       >
                         Renovar
                         <ArrowRight className="h-3 w-3" />
