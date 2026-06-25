@@ -159,13 +159,17 @@ class NeonDB {
   getDocuments(): Documento[] {
     const docTypes: TipoDocumento[] = ['CIV', 'CIPP', 'INMETRO', 'TACÓGRAFO', 'LAUDO QUINTA RODA', 'LAUDO DE BOTTOM', 'LAUDO MANGOTE'];
     const existing = new Map(cache.documentos.map(d => [`${d.veiculoId}-${d.tipoDocumento}`, d]));
+    const generatedKeys = new Set<string>();
     const nowISO = new Date().toISOString();
     const generated: Documento[] = [];
 
     cache.veiculos.forEach(vehicle => {
       docTypes.forEach(tipoDocumento => {
-        const stored = existing.get(`${vehicle.id}-${tipoDocumento}`);
-        const aplicavel = isDocumentApplicable(vehicle.tipoUnidade, tipoDocumento);
+        const key = `${vehicle.id}-${tipoDocumento}`;
+        const stored = existing.get(key);
+        const aplicavelPadrao = isDocumentApplicable(vehicle.tipoUnidade, tipoDocumento);
+        const aplicavel = stored ? stored.aplicavel : aplicavelPadrao;
+        generatedKeys.add(key);
         generated.push(stored ? {
           ...stored,
           placa: vehicle.placa,
@@ -189,6 +193,16 @@ class NeonDB {
           dataAtualizacao: nowISO
         });
       });
+    });
+
+    cache.documentos.forEach(doc => {
+      const key = `${doc.veiculoId}-${doc.tipoDocumento}`;
+      if (!generatedKeys.has(key)) {
+        generated.push({
+          ...doc,
+          statusDocumento: calcularStatusDocumento(doc.aplicavel, doc.dataVencimento)
+        });
+      }
     });
 
     return generated;

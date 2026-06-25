@@ -55,6 +55,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
   // Composition / Coupling dropdown states or refs
   const [couplingTargetId, setCouplingTargetId] = useState('');
+  const [newVehicleDocumentType, setNewVehicleDocumentType] = useState('');
+  const [newVehicleDocumentError, setNewVehicleDocumentError] = useState('');
 
   // Access control shortcuts
   const canWrite = currentUser.perfil !== 'Consulta';
@@ -413,7 +415,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
   };
 
   // Change individual Document applicability (Obrigatoriedade por veículo)
-  const toggleDocApplicability = (doc: Documento, newVal: boolean) => {
+  const toggleDocApplicability = async (doc: Documento, newVal: boolean) => {
     const updatedDocs = documents.map(d => {
       if (d.id === doc.id) {
         const nextStatus = newVal ? 'Vencido' : 'Não aplicável'; // reset to simple state if checked back
@@ -428,12 +430,12 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
       return d;
     });
 
-    dbInLocalStorage.saveDocuments(updatedDocs);
+    await dbInLocalStorage.saveDocuments(updatedDocs);
 
     // Track in audits
     const parentVehic = vehicles.find(v => v.id === doc.veiculoId);
     if (parentVehic) {
-      dbInLocalStorage.logAudit(
+      await dbInLocalStorage.logAudit(
         currentUser,
         parentVehic,
         'edição',
@@ -446,6 +448,58 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
       );
     }
 
+    reloadFromDB();
+  };
+
+  const handleAddVehicleDocumentType = async () => {
+    if (!selectedVehicle) return;
+
+    const trimmedType = newVehicleDocumentType.trim().toUpperCase();
+    setNewVehicleDocumentError('');
+
+    if (!trimmedType) {
+      setNewVehicleDocumentError('Informe o nome do tipo de documento.');
+      return;
+    }
+
+    const typeAlreadyExists = selectedVehicleDocs.some(doc => doc.tipoDocumento.toUpperCase() === trimmedType);
+    if (typeAlreadyExists) {
+      setNewVehicleDocumentError('Este tipo de documento já existe para esta placa.');
+      return;
+    }
+
+    const nowISO = new Date().toISOString();
+    const newDoc: Documento = {
+      id: `d-custom-${selectedVehicle.id}-${Date.now()}`,
+      veiculoId: selectedVehicle.id,
+      placa: selectedVehicle.placa,
+      empresaId: selectedVehicle.empresaId,
+      tipoDocumento: trimmedType,
+      aplicavel: true,
+      numeroDocumento: '',
+      dataEmissao: '',
+      dataVencimento: '',
+      statusDocumento: 'Vencido',
+      criadoPor: currentUser.nome,
+      atualizadoPor: currentUser.nome,
+      dataCadastro: nowISO,
+      dataAtualizacao: nowISO
+    };
+
+    await dbInLocalStorage.saveDocuments([...documents, newDoc]);
+    await dbInLocalStorage.logAudit(
+      currentUser,
+      selectedVehicle,
+      'criação',
+      `tipo de documento ${trimmedType}`,
+      'Inexistente',
+      'Obrigatório',
+      'Novo tipo de documento obrigatório incluído para a placa.',
+      newDoc.id,
+      trimmedType
+    );
+
+    setNewVehicleDocumentType('');
     reloadFromDB();
   };
 
@@ -1079,15 +1133,6 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </div>
 
                 <div className="flex items-center gap-2">
-                  {canWrite && (
-                    <button
-                      onClick={() => openEditModal(selectedVehicle)}
-                      className="p-1.5 px-3 border border-slate-200 hover:border-amber-500/40 text-amber-700 rounded bg-white hover:bg-amber-50 cursor-pointer text-xs flex items-center gap-1.5 transition-colors font-medium shadow-xs"
-                    >
-                      <Edit2 className="h-3 w-3" />
-                      Editar
-                    </button>
-                  )}
                   <button 
                     onClick={() => setSelectedVehicle(null)}
                     className="p-1.5 px-3 border border-slate-200 hover:bg-slate-50 rounded bg-white text-slate-600 font-medium text-xs cursor-pointer shadow-xs transition-colors"
@@ -1226,6 +1271,34 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                         Selecione as obrigatoriedades desta placa
                       </span>
                     </div>
+
+                    {canWrite && (
+                      <div className="bg-white border border-dashed border-blue-200 rounded-lg p-3 space-y-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            type="text"
+                            value={newVehicleDocumentType}
+                            onChange={(e) => {
+                              setNewVehicleDocumentType(e.target.value);
+                              setNewVehicleDocumentError('');
+                            }}
+                            placeholder="Novo tipo de documento para esta placa"
+                            className="flex-1 bg-white border border-slate-200 px-3 py-2 text-xs text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm uppercase"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleAddVehicleDocumentType}
+                            className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer transition-colors shadow-xs text-xs font-bold flex items-center justify-center gap-1.5"
+                          >
+                            <Plus className="h-3.5 w-3.5" />
+                            Inserir tipo
+                          </button>
+                        </div>
+                        {newVehicleDocumentError && (
+                          <p className="text-xs text-rose-600 font-semibold">{newVehicleDocumentError}</p>
+                        )}
+                      </div>
+                    )}
 
                     <div className="space-y-2.5">
                       {selectedVehicleDocs.map((doc) => {
