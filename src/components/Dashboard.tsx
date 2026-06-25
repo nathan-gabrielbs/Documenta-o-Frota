@@ -309,7 +309,7 @@ const statsByCompany = useMemo(() => {
         <div className="flex flex-wrap items-center gap-4">
           {/* Global Company Filter shortcut */}
           <div className="flex items-center gap-2 text-xs">
-            <span className="text-slate-500 font-medium">Lente de Divisão:</span>
+            <span className="text-slate-500 font-medium">Filtro de Empresa:</span>
             <select 
               id="global-company-select"
               className="bg-white border border-slate-200 text-slate-800 font-medium rounded-lg px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 shadow-sm transition-all"
@@ -628,7 +628,6 @@ const statsByCompany = useMemo(() => {
           </div>
 
           <div className="text-sm text-slate-500 italic">
-            *Docs marcados como não aplicáveis/isentos são desconsiderados deste gráfico e índice de conformidade.
           </div>
         </div>
       </div>
@@ -702,7 +701,7 @@ const statsByCompany = useMemo(() => {
 
           {/* Quick Filter Reminder */}
           <p className="text-xs text-slate-400 italic mt-2">
-            Clique em "Lente de Divisão" no topo superior direito para analisar apenas uma destas empresas em todo o sistema.
+            Clique em "Filtro de Empresa" no topo superior direito para analisar apenas uma destas empresas em todo o sistema.
           </p>
         </div>
 

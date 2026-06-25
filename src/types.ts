@@ -45,7 +45,7 @@ export interface Veiculo {
   carretaVinculadaId?: string; // Se for cavalo, ID da carreta acoplada
 }
 
-export type TipoDocumento = 'CIV' | 'CIPP' | 'INMETRO' | 'TACÓGRAFO' | 'LAUDO QUINTA RODA' | 'LAUDO DE BOTTOM' | 'LAUDO MANGOTE';
+export type TipoDocumento = string;
 
 export type StatusDocumento = 'Válido' | 'Atenção' | 'Crítico' | 'Vencido' | 'Não aplicável';
 

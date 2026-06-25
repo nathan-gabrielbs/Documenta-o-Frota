@@ -216,29 +216,29 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col selection:bg-blue-600 selection:text-white">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col selection:bg-blue-600 selection:text-white pt-16">
       
       {/* Primary Top Header */}
-      <header className="sticky top-0 z-30 h-16 bg-white border-b border-slate-200/80 px-6 xl:px-10 py-3 shrink-0 shadow-xs">
-        <div className="w-full max-w-[1680px] mx-auto flex items-center justify-between gap-6">
+      <header className="fixed top-0 left-0 right-0 z-[100] h-16 bg-white/95 backdrop-blur border-b border-slate-200/80 px-6 xl:px-10 py-3 shrink-0 shadow-xs">
+        <div className="w-full h-full flex items-center justify-between gap-6">
           
-          {/* Logo Brand Brand */}
-          <div className="flex items-center gap-4">
+          {/* Logo Brand */}
+          <div className="flex items-center gap-4 shrink-0">
             <div className="p-2 bg-blue-600 rounded-xl shadow-xs">
               <Truck className="h-5.5 w-5.5 text-white" />
             </div>
             <div>
               <span className="font-extrabold tracking-tight text-slate-900 block text-sm sm:text-base leading-tight uppercase font-sans">
-                POTENCIAL transporte
+                GRUPO POTENCIAL
               </span>
               <span className="text-xs text-blue-600 font-bold uppercase tracking-wider block">
-                Conformidade de Documentos e Frotas
+                Conformidade de Documentos de Frota
               </span>
             </div>
           </div>
 
           {/* User Meta Indicator & Session controllers */}
-          <div className="flex items-center gap-6">
+          <div className="ml-auto flex items-center justify-end gap-6 shrink-0">
             
             {/* Global Corporate Lens Tag */}
             {selectedEmpresaGlobal && (
@@ -448,7 +448,7 @@ export default function App() {
 
       {/* Universal Footer section */}
       <footer className="bg-white border-t border-slate-200 py-3.5 px-6 text-center text-xs text-slate-500 shrink-0 font-mono select-none">
-        POTENCIAL TRANSPORTE S.A. © {new Date().getFullYear()} • Sistema Integrado de Compliance • Local Time: 2026-06-22 
+        GRUPO POTENCIAL {new Date().getFullYear()} • Sistema Integrado de Gestão • Desenvolvido por NG ®
       </footer>
 
     </div>

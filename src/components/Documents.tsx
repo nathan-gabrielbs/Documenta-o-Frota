@@ -65,6 +65,19 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
     return () => window.removeEventListener('mockdb-update', reloadFromDB);
   }, []);
 
+  // Evita duas barras de rolagem quando o modal de renovação estiver aberto.
+  // Mantém apenas a rolagem interna do modal e bloqueia o scroll da página ao fundo.
+  useEffect(() => {
+    if (!renewingDoc) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [renewingDoc]);
+
   const activeVehicleIds = useMemo(() => new Set(vehicles.filter(v => v.status === 'ativo').map(v => v.id)), [vehicles]);
 
   // Perform advanced filters across the list
@@ -497,14 +510,23 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
 
       {/* RENEWING / EDITING DOCUMENT MODAL */}
       {renewingDoc && (
-        <div id="renew-document-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div
+          id="renew-document-modal"
+          className="fixed left-0 right-0 bottom-0 top-[68px] bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 overflow-hidden"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget && !isSavingRenewal) {
+              setRenewingDoc(null);
+            }
+          }}
+        >
           <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-2xl bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 overflow-hidden flex flex-col justify-between"
+            initial={{ scale: 0.95, opacity: 0, y: 12 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            onMouseDown={(e) => e.stopPropagation()}
+            className="w-full max-w-2xl max-h-[calc(100dvh-100px)] bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
           >
-            {/* Modal content */}
-            <div>
+            {/* Modal header */}
+            <div className="shrink-0 bg-white px-6 pt-6 relative z-20 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
                 <div className="flex items-center gap-2">
                   <span className="px-2 py-0.5 bg-slate-100 font-mono font-bold border border-slate-200 text-blue-600 rounded shadow-xs">
@@ -516,7 +538,10 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                 </div>
                 <button 
                   onClick={() => setRenewingDoc(null)}
-                  className="text-slate-400 hover:text-slate-650 cursor-pointer p-1"
+                  disabled={isSavingRenewal}
+                  className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 cursor-pointer shadow-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  title="Fechar renovação"
+                  aria-label="Fechar renovação"
                 >
                   <X className="h-5 w-5" />
                 </button>
@@ -528,28 +553,9 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                   <span>{formError}</span>
                 </div>
               )}
+            </div>
 
-              <form onSubmit={handleRenewalSubmit} className="space-y-4 text-xs font-sans">
-                
-                {/* Switch block for applicability toggle */}
-                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <span className="font-bold text-slate-800 text-xs block">Obrigatoriedade Regulamentar</span>
-                    <span className="text-xs text-slate-500 block leading-tight">
-                      Desmarque se este veículo for isento da exigência do {renewingDoc.tipoDocumento} nesta operação.
-                    </span>
-                  </div>
-
-                  <label className="relative inline-flex items-center cursor-pointer select-none">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer"
-                      checked={inputApplicable}
-                      onChange={(e) => setInputApplicable(e.target.checked)}
-                    />
-                    <div className="w-11 h-6 bg-slate-205 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-300 after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 peer-checked:after:bg-white border border-slate-200"></div>
-                  </label>
-                </div>
+            <form onSubmit={handleRenewalSubmit} className="flex-1 overflow-y-auto px-6 pb-6 pt-4 space-y-4 text-xs font-sans">
 
                 {inputApplicable ? (
                   <div className="space-y-4">
@@ -732,8 +738,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                   </button>
                 </div>
 
-              </form>
-            </div>
+            </form>
           </motion.div>
         </div>
       )}
