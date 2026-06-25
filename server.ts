@@ -72,7 +72,7 @@ app.get('/api/data', async (_req, res, next) => {
 });
 
 
-app.patch('/api/documentos/:id', async (req, res, next) => {
+async function upsertDocumentById(req: express.Request, res: express.Response, next: express.NextFunction) {
   try {
     const id = req.params.id;
     const record = req.body?.record;
@@ -93,7 +93,11 @@ app.patch('/api/documentos/:id', async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-});
+}
+
+app.patch('/api/documentos/:id', upsertDocumentById);
+app.put('/api/documentos/:id', upsertDocumentById);
+app.post('/api/documentos/:id', upsertDocumentById);
 
 app.get('/api/:collection', async (req, res, next) => {
   try {

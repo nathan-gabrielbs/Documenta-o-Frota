@@ -35,6 +35,16 @@ function emitUpdate(type?: CollectionName) {
   window.dispatchEvent(new CustomEvent('mockdb-update', { detail: type ? { type } : undefined }));
 }
 
+class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...init,
@@ -46,7 +56,7 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
   if (!response.ok) {
     const body = await response.text();
-    throw new Error(body || `Falha na API Neon (${response.status})`);
+    throw new ApiError(body || `Falha na API Neon (${response.status})`, response.status);
   }
 
   return response.json() as Promise<T>;
@@ -225,10 +235,21 @@ class NeonDB {
       : [...cache.documentos, normalized];
     emitUpdate('documentos');
 
-    await apiFetch(`/api/documentos/${encodeURIComponent(normalized.id)}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ record: cleanUndefined(normalized) })
-    });
+    try {
+      await apiFetch(`/api/documentos/${encodeURIComponent(normalized.id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ record: cleanUndefined(normalized) })
+      });
+    } catch (error) {
+      if (!(error instanceof ApiError) || (error.status !== 404 && error.status !== 405)) {
+        throw error;
+      }
+
+      console.warn('Endpoint PATCH /api/documentos/:id indisponível. Usando gravação completa serializada como fallback temporário.');
+      await this.saveDocuments(this.getDocuments().map(d => d.id === normalized.id ? normalized : d));
+      return;
+    }
+
     await this.refreshAll();
   }
 
