@@ -857,7 +857,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
             Cadastro de Veículos da Frota
           </h1>
           <p className="text-sm text-slate-500 font-sans">
-            Cadastre cavalos mecânicos, carretas acopladas e autotrucks com rastreamento de empresa.
+            Cadastre todos os veículos da frota, gerencie documentos obrigatórios e acompanhe a conformidade de cada unidade.
           </p>
         </div>
 
@@ -915,10 +915,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
             <option value="Carreta">Carreta</option>
             <option value="Porta Container">Porta Container</option>
             <option value="Truck">Truck</option>
-            <option value="Toco">Toco</option>
             <option value="Bitruck">Bitruck</option>
             <option value="Baú">Baú</option>
-            <option value="Outro">Outro</option>
           </select>
         </div>
       </div>
@@ -1188,14 +1186,12 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                     onChange={(e) => setNewType(e.target.value as TipoUnidade)}
                     className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs font-medium cursor-pointer"
                   >
-                    <option value="Cavalo">Cavalo (Mecânico)</option>
-                    <option value="Carreta">Carreta (Reboque)</option>
+                    <option value="Cavalo">Cavalo</option>
+                    <option value="Carreta">Carreta</option>
                     <option value="Porta Container">Porta Container</option>
                     <option value="Truck">Truck</option>
-                    <option value="Toco">Toco</option>
                     <option value="Bitruck">Bitruck</option>
                     <option value="Baú">Baú</option>
-                    <option value="Outro">Outro</option>
                   </select>
                 </div>
 

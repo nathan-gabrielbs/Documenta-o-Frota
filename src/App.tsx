@@ -385,8 +385,8 @@ export default function App() {
               Sessão Registrada
             </span>
             <div className="text-sm text-slate-500 leading-relaxed font-sans font-medium">
-              Logado: <strong className="text-slate-800 font-bold">{sessionUser.nome}</strong>.<br />
-              Perfil: <strong className="text-slate-800 font-bold">{sessionUser.perfil}</strong>.
+              Logado: <strong className="text-slate-800 font-bold">{sessionUser.nome}</strong><br />
+              Perfil: <strong className="text-slate-800 font-bold">{sessionUser.perfil}</strong>
             </div>
           </div>
         </aside>
