@@ -41,6 +41,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
   const [deleteConfirmVehicle, setDeleteConfirmVehicle] = useState<Veiculo | null>(null);
   const [crlvVehicle, setCrlvVehicle] = useState<Veiculo | null>(null);
   const [crlvError, setCrlvError] = useState('');
+  const [isCrlvUploading, setIsCrlvUploading] = useState(false);
   const [systemAlertMessage, setSystemAlertMessage] = useState<string | null>(null);
   const [savingDocumentIds, setSavingDocumentIds] = useState<Set<string>>(() => new Set());
   const savingDocumentIdsRef = useRef<Set<string>>(new Set());
@@ -96,44 +97,58 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
   const saveVehicleCrlv = async (vehicle: Veiculo, file: File) => {
     setCrlvError('');
+    setIsCrlvUploading(true);
 
-    const fileContent = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ''));
-      reader.onerror = () => reject(reader.error);
-      reader.readAsDataURL(file);
-    });
+    try {
+      const fileContent = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(file);
+      });
 
-    const nowISO = new Date().toISOString();
-    const updatedVehicle: Veiculo = {
-      ...vehicle,
-      crlvAnexoNome: file.name,
-      crlvAnexoConteudo: fileContent,
-      atualizadoPor: currentUser.nome,
-      dataAtualizacao: nowISO
-    };
-    const updatedVehicles = vehicles.map(v => v.id === vehicle.id ? updatedVehicle : v);
+      const nowISO = new Date().toISOString();
 
-    await dbInLocalStorage.saveVehicles(updatedVehicles);
-    await dbInLocalStorage.logAudit(
-      currentUser,
-      updatedVehicle,
-      'edição',
-      'CRLV anexado',
-      vehicle.crlvAnexoNome || 'Sem anexo',
-      file.name,
-      'Anexo de CRLV atualizado para a placa.'
-    );
+      const updatedVehicle: Veiculo = {
+        ...vehicle,
+        crlvAnexoNome: file.name,
+        crlvAnexoConteudo: fileContent,
+        atualizadoPor: currentUser.nome,
+        dataAtualizacao: nowISO
+      };
 
-    setVehicles(updatedVehicles);
-    setCrlvVehicle(updatedVehicle);
-    if (selectedVehicle?.id === vehicle.id) setSelectedVehicle(updatedVehicle);
+      const updatedVehicles = vehicles.map(v =>
+        v.id === vehicle.id ? updatedVehicle : v
+      );
+
+      await dbInLocalStorage.saveVehicles(updatedVehicles);
+
+      await dbInLocalStorage.logAudit(
+        currentUser,
+        updatedVehicle,
+        'edição',
+        'CRLV anexado',
+        vehicle.crlvAnexoNome || 'Sem anexo',
+        file.name,
+        'Anexo de CRLV atualizado para a placa.'
+      );
+
+      setVehicles(updatedVehicles);
+      setCrlvVehicle(updatedVehicle);
+
+      if (selectedVehicle?.id === vehicle.id) {
+        setSelectedVehicle(updatedVehicle);
+      }
+    } finally {
+      setIsCrlvUploading(false);
+    }
   };
 
   const removeVehicleCrlv = async (vehicle: Veiculo) => {
     setCrlvError('');
 
     const nowISO = new Date().toISOString();
+
     const updatedVehicle: Veiculo = {
       ...vehicle,
       crlvAnexoNome: undefined,
@@ -141,22 +156,40 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
       atualizadoPor: currentUser.nome,
       dataAtualizacao: nowISO
     };
-    const updatedVehicles = vehicles.map(v => v.id === vehicle.id ? updatedVehicle : v);
 
-    await dbInLocalStorage.saveVehicles(updatedVehicles);
-    await dbInLocalStorage.logAudit(
-      currentUser,
-      updatedVehicle,
-      'edição',
-      'CRLV anexado',
-      vehicle.crlvAnexoNome || 'Anexo existente',
-      'Removido',
-      'Anexo de CRLV removido da placa.'
+    const updatedVehicles = vehicles.map(v =>
+      v.id === vehicle.id ? updatedVehicle : v
     );
 
+    // Fecha o modal imediatamente, sem esperar o banco
+    setCrlvVehicle(null);
+
+    // Atualiza a tela imediatamente
     setVehicles(updatedVehicles);
-    setCrlvVehicle(updatedVehicle);
-    if (selectedVehicle?.id === vehicle.id) setSelectedVehicle(updatedVehicle);
+
+    if (selectedVehicle?.id === vehicle.id) {
+      setSelectedVehicle(updatedVehicle);
+    }
+
+    try {
+      await dbInLocalStorage.saveVehicles(updatedVehicles);
+
+      await dbInLocalStorage.logAudit(
+        currentUser,
+        updatedVehicle,
+        'edição',
+        'CRLV anexado',
+        vehicle.crlvAnexoNome || 'Anexo existente',
+        'Removido',
+        'Anexo de CRLV removido da placa.'
+      );
+    } catch (error) {
+      console.error('Erro ao remover CRLV:', error);
+
+      setSystemAlertMessage(
+        'O anexo foi removido da tela, mas houve erro ao salvar no banco. Atualize a página e confira se a alteração foi gravada.'
+      );
+    }
   };
 
   // Synchronize state with db helper
@@ -730,8 +763,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
             <label
               key={slot}
               className={`flex items-center gap-2 rounded-xl border px-3 py-2 transition-all ${occupied
-                  ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
-                  : 'bg-white border-blue-200 text-slate-800 hover:border-blue-400 hover:bg-blue-50 cursor-pointer shadow-xs'
+                ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                : 'bg-white border-blue-200 text-slate-800 hover:border-blue-400 hover:bg-blue-50 cursor-pointer shadow-xs'
                 }`}
             >
               <Truck className={`h-4 w-4 shrink-0 ${occupied ? 'text-slate-400' : 'text-blue-600'}`} />
@@ -1844,17 +1877,27 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </span>
               </div>
 
-              <label className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl cursor-pointer transition-colors shadow-xs font-bold">
-                <Upload className="h-4 w-4" />
-                Anexar/Substituir CRLV
+              <label
+                className={`flex items-center justify-center gap-2 w-full px-4 py-2 rounded-xl transition-colors shadow-xs font-bold ${isCrlvUploading
+                  ? 'bg-slate-300 text-slate-500 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+                  }`}
+              >
+                <Upload className={`h-4 w-4 ${isCrlvUploading ? 'animate-pulse' : ''}`} />
+
+                {isCrlvUploading ? 'Anexando documento, aguarde...' : 'Anexar/Substituir CRLV'}
+
                 <input
                   type="file"
                   accept=".pdf,image/*"
                   className="hidden"
+                  disabled={isCrlvUploading}
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     e.target.value = '';
+
                     if (!file) return;
+
                     try {
                       await saveVehicleCrlv(crlvVehicle, file);
                     } catch (error) {
@@ -1880,13 +1923,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               </button>
               <button
                 type="button"
-                onClick={async () => {
-                  try {
-                    await removeVehicleCrlv(crlvVehicle);
-                  } catch (error) {
-                    console.error('Erro ao remover CRLV:', error);
-                    setCrlvError('Não foi possível remover o CRLV. Tente novamente.');
-                  }
+                onClick={() => {
+                  void removeVehicleCrlv(crlvVehicle);
                 }}
                 disabled={!vehicleHasCrlv(crlvVehicle)}
                 className="px-4 py-2 bg-rose-50 hover:bg-rose-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-rose-700 font-bold rounded-xl border border-rose-200 shadow-xs cursor-pointer transition-colors flex items-center justify-center gap-2"
