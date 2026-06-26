@@ -5,9 +5,9 @@
 
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
-import { 
+import {
   Plus, Edit2, Link, Unlink, Activity, FileCheck, Info,
-  AlertTriangle, Truck, Eye, CheckCircle2, XCircle, Search, 
+  AlertTriangle, Truck, Eye, CheckCircle2, XCircle, Search,
   Trash2, X, ClipboardList, Calendar, User
 } from 'lucide-react';
 import { Veiculo, Documento, Usuario, TipoUnidade, StatusVeiculo } from '../types';
@@ -21,7 +21,7 @@ interface VehiclesProps {
 }
 
 export default function Vehicles({ currentUser, initialSearch = '', selectedEmpresaGlobal }: VehiclesProps) {
-  
+
   // Real-time local state synced from LocalDB
   const [vehicles, setVehicles] = useState<Veiculo[]>(() => dbInLocalStorage.getVehicles());
   const [documents, setDocuments] = useState<Documento[]>(() => dbInLocalStorage.getDocuments());
@@ -32,7 +32,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
   const [searchQuery, setSearchQuery] = useState(initialSearch);
   const [companyFilter, setCompanyFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
-  
+
   // Modals / Details toggles
   const [selectedVehicle, setSelectedVehicle] = useState<Veiculo | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -107,12 +107,12 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     return vehicles.filter(v => {
       // Plate search matched
       const matchesSearch = searchQuery ? v.placa.toLowerCase().includes(searchQuery.toLowerCase()) || v.modelo.toLowerCase().includes(searchQuery.toLowerCase()) : true;
-      
+
       // Global and screen filters
       const effectiveCompany = selectedEmpresaGlobal || companyFilter;
       const matchesCompany = effectiveCompany ? v.empresaId === effectiveCompany : true;
       const matchesType = typeFilter ? v.tipoUnidade === typeFilter : true;
-      
+
       return matchesSearch && matchesCompany && matchesType;
     });
   }, [vehicles, searchQuery, companyFilter, typeFilter, selectedEmpresaGlobal]);
@@ -122,7 +122,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     const veh = vehicles.find(v => v.id === vehicleId);
     const vehicleDocs = documents.filter(d => d.veiculoId === vehicleId || (veh && d.placa === veh.placa));
     if (vehicleDocs.length === 0) return 100;
-    
+
     const applicableDocs = vehicleDocs.filter(d => d.aplicavel);
     if (applicableDocs.length === 0) return 100; // No requirements -> 100% compliant
 
@@ -220,7 +220,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
     reloadFromDB();
     setIsCreateModalOpen(false);
-    
+
     // Reset Form fields
     setNewPlate('');
     setNewModel('');
@@ -419,23 +419,23 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
     const updated = vehicles.map(v => {
       if (v.id === vehicleId) {
-        return { 
-          ...v, 
-          carretaVinculadaId: v.id === vehicleId && v.carretaVinculadaId !== linkedId ? v.carretaVinculadaId : undefined, 
-          carreta2VinculadaId: v.id === vehicleId && v.carreta2VinculadaId !== linkedId ? v.carreta2VinculadaId : undefined, 
-          cavaloVinculadoId: undefined, 
-          dataAtualizacao: new Date().toISOString(), 
-          atualizadoPor: currentUser.nome 
+        return {
+          ...v,
+          carretaVinculadaId: v.id === vehicleId && v.carretaVinculadaId !== linkedId ? v.carretaVinculadaId : undefined,
+          carreta2VinculadaId: v.id === vehicleId && v.carreta2VinculadaId !== linkedId ? v.carreta2VinculadaId : undefined,
+          cavaloVinculadoId: undefined,
+          dataAtualizacao: new Date().toISOString(),
+          atualizadoPor: currentUser.nome
         };
       }
       if (v.id === linkedId) {
-        return { 
-          ...v, 
-          carretaVinculadaId: undefined, 
-          carreta2VinculadaId: undefined, 
-          cavaloVinculadoId: undefined, 
-          dataAtualizacao: new Date().toISOString(), 
-          atualizadoPor: currentUser.nome 
+        return {
+          ...v,
+          carretaVinculadaId: undefined,
+          carreta2VinculadaId: undefined,
+          cavaloVinculadoId: undefined,
+          dataAtualizacao: new Date().toISOString(),
+          atualizadoPor: currentUser.nome
         };
       }
       return v;
@@ -618,23 +618,41 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     if (!selectedVehicle || !canWrite || !isCouplingUnit(selectedVehicle.tipoUnidade) || availableCouplings.length === 0) return null;
 
     if (selectedVehicle.tipoUnidade === 'Cavalo') {
-      const trailerSlots: Array<{ slot: 'carreta1' | 'carreta2'; label: string; occupied: boolean }> = [
-        { slot: 'carreta1', label: 'Selecionar CARRETA 1', occupied: Boolean(selectedVehicle.carretaVinculadaId) },
-        { slot: 'carreta2', label: 'Selecionar CARRETA 2', occupied: Boolean(selectedVehicle.carreta2VinculadaId) }
-      ];
+      const trailerSlots: Array<{
+        slot: 'carreta1' | 'carreta2';
+        label: string;
+        selectLabel: string;
+        occupiedLabel: string;
+        occupied: boolean;
+      }> = [
+          {
+            slot: 'carreta1',
+            label: 'CARRETA 1',
+            selectLabel: 'Selecionar CARRETA 1',
+            occupiedLabel: 'Carreta 1 selecionada',
+            occupied: Boolean(selectedVehicle.carretaVinculadaId)
+          },
+          {
+            slot: 'carreta2',
+            label: 'CARRETA 2',
+            selectLabel: 'Selecionar CARRETA 2',
+            occupiedLabel: 'Carreta 2 selecionada',
+            occupied: Boolean(selectedVehicle.carreta2VinculadaId)
+          }
+        ];
 
       return (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-          {trailerSlots.map(({ slot, label, occupied }) => (
+          {trailerSlots.map(({ slot, selectLabel, occupiedLabel, occupied }) => (
             <label
               key={slot}
-              className={`flex items-center gap-2 rounded-xl border px-3 py-2 transition-all ${
-                occupied
+              className={`flex items-center gap-2 rounded-xl border px-3 py-2 transition-all ${occupied
                   ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
                   : 'bg-white border-blue-200 text-slate-800 hover:border-blue-400 hover:bg-blue-50 cursor-pointer shadow-xs'
-              }`}
+                }`}
             >
               <Truck className={`h-4 w-4 shrink-0 ${occupied ? 'text-slate-400' : 'text-blue-600'}`} />
+
               <select
                 id={`couple-${slot}-select`}
                 value=""
@@ -646,7 +664,10 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 }}
                 className="w-full bg-transparent text-xs font-bold uppercase tracking-wide outline-none cursor-pointer disabled:cursor-not-allowed"
               >
-                <option value="">{occupied ? `${label} já acoplada` : label}</option>
+                <option value="">
+                  {occupied ? occupiedLabel : selectLabel}
+                </option>
+
                 {availableCouplings.map(item => (
                   <option key={item.id} value={item.id}>
                     [{item.placa}] {item.modelo}
@@ -691,7 +712,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
   return (
     <div className="space-y-6">
-      
+
       {/* Title block */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-slate-200 pb-5">
         <div>
@@ -791,7 +812,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                   const compValue = getVehicleCompliance(veh.id);
                   const isHorse = veh.tipoUnidade === 'Cavalo';
                   const isTrailer = veh.tipoUnidade === 'Carreta' || veh.tipoUnidade === 'Porta Container';
-                  
+
                   // counterpart plate lookup
                   const linkedRefObjs = veh.tipoUnidade === 'Cavalo'
                     ? getHorseTrailerIds(veh).map(id => vehicles.find(v => v.id === id)).filter(Boolean) as Veiculo[]
@@ -800,8 +821,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                       : [];
 
                   return (
-                    <tr 
-                      key={veh.id} 
+                    <tr
+                      key={veh.id}
                       className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
                       onClick={() => setSelectedVehicle(veh)}
                     >
@@ -836,10 +857,9 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
                       <td className="p-4 text-center">
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 rounded-full border border-slate-200 shadow-xs">
-                          <span className={`w-2 h-2 rounded-full ${
-                            compValue >= 90 ? 'bg-emerald-500' :
+                          <span className={`w-2 h-2 rounded-full ${compValue >= 90 ? 'bg-emerald-500' :
                             compValue >= 70 ? 'bg-amber-500' : 'bg-rose-500'
-                          }`} />
+                            }`} />
                           <span className="font-bold text-slate-700 text-sm">{compValue}%</span>
                         </div>
                       </td>
@@ -848,18 +868,18 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                         {linkedRefObjs.length > 0 ? (
                           <div className="flex flex-wrap items-center gap-2">
                             {linkedRefObjs.map((linkedRefObj) => (
-                            <div key={linkedRefObj.id} className="flex items-center gap-1">
-                            <span className="p-1 px-1.5 text-xs font-mono border border-slate-200 bg-slate-50 rounded text-slate-700 font-bold shadow-xs">
-                              {linkedRefObj.placa}
-                            </span>
-                            <button
-                              onClick={() => handleDecoupleUnits(veh.id, linkedRefObj.id)}
-                              title="Desvincular composição"
-                              className="p-1 bg-slate-100 text-slate-500 hover:text-rose-600 rounded cursor-pointer hover:bg-slate-200 transition-colors"
-                            >
-                              <Unlink className="h-3 w-3" />
-                            </button>
-                            </div>
+                              <div key={linkedRefObj.id} className="flex items-center gap-1">
+                                <span className="p-1 px-1.5 text-xs font-mono border border-slate-200 bg-slate-50 rounded text-slate-700 font-bold shadow-xs">
+                                  {linkedRefObj.placa}
+                                </span>
+                                <button
+                                  onClick={() => handleDecoupleUnits(veh.id, linkedRefObj.id)}
+                                  title="Desvincular composição"
+                                  className="p-1 bg-slate-100 text-slate-500 hover:text-rose-600 rounded cursor-pointer hover:bg-slate-200 transition-colors"
+                                >
+                                  <Unlink className="h-3 w-3" />
+                                </button>
+                              </div>
                             ))}
                           </div>
                         ) : (
@@ -870,12 +890,11 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                       </td>
 
                       <td className="p-4 text-center">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold tracking-wider lowercase border select-none ${
-                          veh.status === 'ativo' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-semibold tracking-wider lowercase border select-none ${veh.status === 'ativo' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' :
                           veh.status === 'manutenção' ? 'bg-amber-50 text-amber-700 border-amber-100' :
-                          veh.status === 'bloqueado' ? 'bg-rose-50 text-rose-700 border-rose-100 shadow-xs' :
-                          'bg-slate-100 text-slate-500 border-slate-200'
-                        }`}>
+                            veh.status === 'bloqueado' ? 'bg-rose-50 text-rose-700 border-rose-100 shadow-xs' :
+                              'bg-slate-100 text-slate-500 border-slate-200'
+                          }`}>
                           {veh.status}
                         </span>
                       </td>
@@ -923,7 +942,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
       {/* MODAL 1: Create Vehicle */}
       {isCreateModalOpen && (
         <div id="create-vehicle-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="w-full max-w-xl bg-white border border-slate-200 rounded-2xl shadow-2xl p-6"
@@ -932,7 +951,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               <h3 className="text-sm font-bold uppercase text-blue-600 tracking-wider">
                 Novo Cadastro de Veículo
               </h3>
-              <button 
+              <button
                 onClick={() => setIsCreateModalOpen(false)}
                 className="text-slate-400 hover:text-slate-650 cursor-pointer p-1"
               >
@@ -1149,7 +1168,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
       {/* MODAL 2: Edit Vehicle */}
       {isEditModalOpen && editingVehicle && (
         <div id="edit-vehicle-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
-          <motion.div 
+          <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             className="w-full max-w-xl bg-white border border-slate-200 rounded-2xl shadow-2xl p-6"
@@ -1158,7 +1177,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               <h3 className="text-sm font-bold uppercase text-amber-600 tracking-wider">
                 Editar Cadastro: {editingVehicle.placa}
               </h3>
-              <button 
+              <button
                 onClick={() => setIsEditModalOpen(false)}
                 className="text-slate-400 hover:text-slate-650 cursor-pointer p-1"
               >
@@ -1339,7 +1358,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
             }
           }}
         >
-          <motion.div 
+          <motion.div
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -1358,7 +1377,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                       Ficha do Veículo ({selectedVehicle.tipoUnidade})
                     </h3>
                     <p className="text-sm text-slate-500 font-medium">
-                      Divisão operacional: <strong className="text-blue-600 font-semibold">{obterNomeEmpresa(selectedVehicle.empresaId, companyOptions)}</strong>
+                      Empresa: <strong className="text-blue-600 font-semibold">{obterNomeEmpresa(selectedVehicle.empresaId, companyOptions)}</strong>
                       {selectedVehicle.arrendado && (
                         <span className="block text-indigo-600 font-semibold">
                           Unidade arrendada{selectedVehicle.empresaArrendadora ? ` de ${selectedVehicle.empresaArrendadora}` : ''}
@@ -1369,7 +1388,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <button 
+                  <button
                     onClick={() => setSelectedVehicle(null)}
                     className="h-10 w-10 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 cursor-pointer shadow-xs transition-colors"
                     title="Fechar ficha do veículo"
@@ -1384,7 +1403,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
             <div className="flex-1 overflow-y-auto px-6 pb-6">
               {/* Master layout grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
+
                 {/* Column 1: Core Specifications */}
                 <div className="bg-slate-50 p-4 border border-slate-200 rounded-xl space-y-4 text-xs">
                   <h4 className="font-bold text-blue-600 uppercase tracking-widest text-xs pb-1 border-b border-slate-200">
@@ -1428,67 +1447,67 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
                 {/* Column 2 & 3: Composition coupling panel (Visão Cavalo + Carreta) */}
                 <div className="md:col-span-2 space-y-5">
-                  
+
                   {/* COUPLING BLOCK (Requirement 4) */}
                   {isCouplingUnit(selectedVehicle.tipoUnidade) && (
-                  <div className="bg-slate-50 p-4 border border-slate-200 rounded-xl space-y-3.5">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-bold text-blue-600 uppercase tracking-widest text-xs">
-                        Composição do Conjunto Rodoviário
-                      </h4>
-                      <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                        Vínculo Cavalo + Reboque
-                      </div>
-                    </div>
-
-                    {selectedLinkedVehicles.length > 0 ? (
-                      <>
-                      <div className="space-y-2">
-                        {selectedLinkedVehicles.map((linkedVehicle, index) => (
-                      <div key={linkedVehicle.id} className="p-3.5 rounded-xl border border-blue-200 bg-blue-50/50 flex items-center justify-between gap-6">
-                        <div className="flex items-center gap-4">
-                          <div className="p-2 bg-blue-100 border border-blue-200 text-blue-600 rounded-lg">
-                            <Truck className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <span className="text-xs text-blue-650 block font-bold uppercase tracking-tight">{selectedVehicle.tipoUnidade === 'Cavalo' ? `CARRETA ${index + 1}` : 'CAVALO ACOPLADO'}</span>
-                            <span className="font-mono font-bold text-slate-900 text-xs">{linkedVehicle.placa}</span>
-                            <span className="text-xs text-slate-500 block">{linkedVehicle.tipoUnidade} • {linkedVehicle.modelo}</span>
-                          </div>
+                    <div className="bg-slate-50 p-4 border border-slate-200 rounded-xl space-y-3.5">
+                      <div className="flex items-center justify-between">
+                        <h4 className="font-bold text-blue-600 uppercase tracking-widest text-xs">
+                          Composição do Conjunto
+                        </h4>
+                        <div className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                          Vínculo Cavalo + Carreta
                         </div>
+                      </div>
 
-                        {canWrite && (
-                          <button
-                            onClick={() => handleDecoupleUnits(selectedVehicle.id, linkedVehicle.id)}
-                            className="p-2 px-3 bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100/70 rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-all active:scale-[0.98]"
-                          >
-                            <Unlink className="h-3.5 w-3.5" />
-                            Desvincular
-                          </button>
-                        )}
-                      </div>
-                        ))}
-                      </div>
-                        <div className="pt-2">
+                      {selectedLinkedVehicles.length > 0 ? (
+                        <>
+                          <div className="space-y-2">
+                            {selectedLinkedVehicles.map((linkedVehicle, index) => (
+                              <div key={linkedVehicle.id} className="p-3.5 rounded-xl border border-blue-200 bg-blue-50/50 flex items-center justify-between gap-6">
+                                <div className="flex items-center gap-4">
+                                  <div className="p-2 bg-blue-100 border border-blue-200 text-blue-600 rounded-lg">
+                                    <Truck className="h-5 w-5" />
+                                  </div>
+                                  <div>
+                                    <span className="text-xs text-blue-650 block font-bold uppercase tracking-tight">{selectedVehicle.tipoUnidade === 'Cavalo' ? `CARRETA ${index + 1}` : 'CAVALO ACOPLADO'}</span>
+                                    <span className="font-mono font-bold text-slate-900 text-xs">{linkedVehicle.placa}</span>
+                                    <span className="text-xs text-slate-500 block">{linkedVehicle.tipoUnidade} • {linkedVehicle.modelo}</span>
+                                  </div>
+                                </div>
+
+                                {canWrite && (
+                                  <button
+                                    onClick={() => handleDecoupleUnits(selectedVehicle.id, linkedVehicle.id)}
+                                    className="p-2 px-3 bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100/70 rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-all active:scale-[0.98]"
+                                  >
+                                    <Unlink className="h-3.5 w-3.5" />
+                                    Desvincular
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          <div className="pt-2">
+                            {renderAutoCouplingControls()}
+                          </div>
+                        </>
+                      ) : (
+                        <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-3">
+                          <div className="text-sm text-slate-500 leading-normal">
+                            Este veículo está operando de forma <strong className="text-slate-800">individual</strong> e independente no sistema. Vincule com uma licença da mesma empresa corporativa.
+                          </div>
                           {renderAutoCouplingControls()}
                         </div>
-                      </>
-                    ) : (
-                      <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-3">
-                        <div className="text-sm text-slate-500 leading-normal">
-                          Este veículo está operando de forma <strong className="text-slate-800">individual</strong> e independente no sistema. Vincule com uma licença da mesma empresa corporativa.
-                        </div>
-                        {renderAutoCouplingControls()}
-                      </div>
-                    )}
-                  </div>
+                      )}
+                    </div>
                   )}
 
                   {/* DOCUMENTS APPLICABILITY CONFIG (Requirement 4) */}
                   <div className="bg-slate-50 p-4 border border-slate-200 rounded-xl space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-200 pb-2">
                       <h4 className="font-bold text-blue-600 uppercase tracking-widest text-xs">
-                        Controle de Aplicabilidade Regulamentar
+                        Controle Regulamentar
                       </h4>
                       <span className="text-xs text-slate-450 italic font-medium">
                         Selecione as obrigatoriedades desta placa
@@ -1550,12 +1569,11 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                             </div>
 
                             {/* Badge showing calculated status */}
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
-                              doc.statusDocumento === 'Não aplicável' ? 'bg-slate-100 border-slate-200 text-slate-450' :
+                            <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${doc.statusDocumento === 'Não aplicável' ? 'bg-slate-100 border-slate-200 text-slate-450' :
                               doc.statusDocumento === 'Válido' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                              doc.statusDocumento === 'Atenção' ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                              'bg-rose-50 text-rose-700 border-rose-200 animate-pulse'
-                            }`}>
+                                doc.statusDocumento === 'Atenção' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                                  'bg-rose-50 text-rose-700 border-rose-200 animate-pulse'
+                              }`}>
                               {doc.statusDocumento}
                             </span>
                           </div>
@@ -1583,7 +1601,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
                     <div className="space-y-2">
                       <p className="text-xs text-slate-500 font-medium">Pendências ativas no conjunto:</p>
-                      
+
                       {ensembleDocs.filter(d => d.aplicavel && (d.statusDocumento === 'Vencido' || d.statusDocumento === 'Crítico')).length === 0 ? (
                         <div className="p-2 bg-emerald-50 text-emerald-700 text-sm rounded-lg border border-emerald-200 flex items-center gap-1.5 font-bold">
                           <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -1604,7 +1622,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               <div className="mt-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
                 <h4 className="font-bold text-blue-600 uppercase tracking-widest text-xs pb-2 border-b border-slate-200 mb-3 flex items-center gap-1.5">
                   <ClipboardList className="h-4 w-4" />
-                  Logs de Alterações e Auditoria da Placa {selectedVehicle.placa}
+                  Logs de Alterações da Placa {selectedVehicle.placa}
                 </h4>
 
                 {selectedVehicleAudits.length === 0 ? (
@@ -1621,12 +1639,11 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                           <div className="space-y-1">
                             {/* Action badge */}
                             <div className="flex items-center gap-2 flex-wrap">
-                              <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded border ${
-                                log.tipoAcao === 'criação' ? 'bg-teal-50 text-teal-700 border-teal-200' :
+                              <span className={`text-xs font-bold uppercase px-1.5 py-0.5 rounded border ${log.tipoAcao === 'criação' ? 'bg-teal-50 text-teal-700 border-teal-200' :
                                 log.tipoAcao === 'renovação' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                log.tipoAcao === 'exclusão' ? 'bg-rose-50 text-rose-700 border-rose-200' :
-                                'bg-amber-50 text-amber-700 border-amber-200'
-                              }`}>
+                                  log.tipoAcao === 'exclusão' ? 'bg-rose-50 text-rose-700 border-rose-200' :
+                                    'bg-amber-50 text-amber-700 border-amber-200'
+                                }`}>
                                 {log.tipoAcao}
                               </span>
                               <span className="font-bold text-slate-800">
@@ -1682,7 +1699,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 Excluir veículo permanentemente?
               </h3>
             </div>
-            
+
             <p className="text-slate-600 mb-6 text-sm leading-relaxed">
               Tem certeza que deseja excluir permanentemente o veículo <strong className="text-slate-900 font-bold">{deleteConfirmVehicle.placa}</strong>? Isso removerá também todos os documentos associados. Esta ação não poderá ser desfeita.
             </p>
