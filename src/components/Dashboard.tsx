@@ -13,6 +13,7 @@ import {
 import { Veiculo, Documento, Empresa } from '../types';
 import { dbInLocalStorage, formatarDataBR } from '../utils/mockdb';
 import { obterNomeEmpresa } from '../utils/empresaUtils';
+import { getVehicleBaseLabel } from '../utils/vehicleBaseUtils';
 
 interface DashboardProps {
   onNavigateToVehicles: (plateSearch?: string) => void;
@@ -777,6 +778,11 @@ const statsByCompany = useMemo(() => {
                           <span className="font-mono font-semibold text-slate-800">
                             {doc.placa}
                           </span>
+                          {getVehicleBaseLabel(activeVehicles.find(v => v.id === doc.veiculoId || v.placa === doc.placa)) && (
+                            <span className="text-[11px] bg-blue-50 border border-blue-200 text-blue-700 rounded px-1.5 py-0.5 font-bold">
+                              {getVehicleBaseLabel(activeVehicles.find(v => v.id === doc.veiculoId || v.placa === doc.placa))}
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-slate-500 font-medium">
                           Vencimento: <strong className={isVencido ? 'text-rose-600' : 'text-slate-700'}>

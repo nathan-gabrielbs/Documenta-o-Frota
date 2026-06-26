@@ -13,6 +13,7 @@ import {
 import { Documento, Usuario, TipoDocumento, StatusDocumento } from '../types';
 import { dbInLocalStorage, calcularStatusDocumento, formatarDataBR } from '../utils/mockdb';
 import { EMPRESAS_PADRAO, formatarNomeEmpresaId, obterNomeEmpresa } from '../utils/empresaUtils';
+import { getVehicleBaseLabel } from '../utils/vehicleBaseUtils';
 
 interface DocumentsProps {
   currentUser: Usuario;
@@ -52,6 +53,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
 
   // Access rights check
   const canWrite = currentUser.perfil !== 'Consulta';
+  const getDocVehicle = (doc: Documento) => vehicles.find(v => v.id === doc.veiculoId || v.placa === doc.placa);
 
   // Synchronise state with local engine
   const reloadFromDB = () => {
@@ -420,6 +422,11 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                         <span className="font-mono bg-slate-100 border border-slate-200 text-slate-800 rounded px-1.5 py-0.5 shadow-xs">
                           {doc.placa}
                         </span>
+                        {getVehicleBaseLabel(getDocVehicle(doc)) && (
+                          <span className="ml-1.5 text-[11px] bg-blue-50 border border-blue-200 text-blue-700 rounded px-1.5 py-0.5 shadow-xs">
+                            {getVehicleBaseLabel(getDocVehicle(doc))}
+                          </span>
+                        )}
                       </td>
 
                       <td className="p-4 text-slate-500 font-medium select-none">
