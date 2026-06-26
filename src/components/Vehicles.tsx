@@ -8,7 +8,7 @@ import { motion } from 'motion/react';
 import {
   Plus, Edit2, Link, Unlink, Activity, FileCheck, Info,
   AlertTriangle, Truck, Eye, CheckCircle2, XCircle, Search,
-  Trash2, X, ClipboardList, Calendar, User
+  Trash2, X, ClipboardList, Calendar, User, Download, Upload
 } from 'lucide-react';
 import { Veiculo, Documento, Usuario, TipoUnidade, StatusVeiculo } from '../types';
 import { dbInLocalStorage, PREDEFINED_COMPANIES, isDocumentApplicable } from '../utils/mockdb';
@@ -39,6 +39,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingVehicle, setEditingVehicle] = useState<Veiculo | null>(null);
   const [deleteConfirmVehicle, setDeleteConfirmVehicle] = useState<Veiculo | null>(null);
+  const [crlvVehicle, setCrlvVehicle] = useState<Veiculo | null>(null);
+  const [crlvError, setCrlvError] = useState('');
   const [systemAlertMessage, setSystemAlertMessage] = useState<string | null>(null);
   const [savingDocumentIds, setSavingDocumentIds] = useState<Set<string>>(() => new Set());
   const savingDocumentIdsRef = useRef<Set<string>>(new Set());
@@ -74,6 +76,87 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     if (!horse.carretaVinculadaId) return 'carretaVinculadaId';
     if (!horse.carreta2VinculadaId) return 'carreta2VinculadaId';
     return null;
+  };
+
+  const vehicleHasCrlv = (vehicle: Veiculo) => Boolean(vehicle.crlvAnexoConteudo);
+
+  const downloadVehicleCrlv = (vehicle: Veiculo) => {
+    if (!vehicle.crlvAnexoConteudo) {
+      setSystemAlertMessage(`A placa ${vehicle.placa} ainda não possui CRLV anexado.`);
+      return;
+    }
+
+    const link = document.createElement('a');
+    link.href = vehicle.crlvAnexoConteudo;
+    link.download = vehicle.crlvAnexoNome || `CRLV-${vehicle.placa}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const saveVehicleCrlv = async (vehicle: Veiculo, file: File) => {
+    setCrlvError('');
+
+    const fileContent = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+
+    const nowISO = new Date().toISOString();
+    const updatedVehicle: Veiculo = {
+      ...vehicle,
+      crlvAnexoNome: file.name,
+      crlvAnexoConteudo: fileContent,
+      atualizadoPor: currentUser.nome,
+      dataAtualizacao: nowISO
+    };
+    const updatedVehicles = vehicles.map(v => v.id === vehicle.id ? updatedVehicle : v);
+
+    await dbInLocalStorage.saveVehicles(updatedVehicles);
+    await dbInLocalStorage.logAudit(
+      currentUser,
+      updatedVehicle,
+      'edição',
+      'CRLV anexado',
+      vehicle.crlvAnexoNome || 'Sem anexo',
+      file.name,
+      'Anexo de CRLV atualizado para a placa.'
+    );
+
+    setVehicles(updatedVehicles);
+    setCrlvVehicle(updatedVehicle);
+    if (selectedVehicle?.id === vehicle.id) setSelectedVehicle(updatedVehicle);
+  };
+
+  const removeVehicleCrlv = async (vehicle: Veiculo) => {
+    setCrlvError('');
+
+    const nowISO = new Date().toISOString();
+    const updatedVehicle: Veiculo = {
+      ...vehicle,
+      crlvAnexoNome: undefined,
+      crlvAnexoConteudo: undefined,
+      atualizadoPor: currentUser.nome,
+      dataAtualizacao: nowISO
+    };
+    const updatedVehicles = vehicles.map(v => v.id === vehicle.id ? updatedVehicle : v);
+
+    await dbInLocalStorage.saveVehicles(updatedVehicles);
+    await dbInLocalStorage.logAudit(
+      currentUser,
+      updatedVehicle,
+      'edição',
+      'CRLV anexado',
+      vehicle.crlvAnexoNome || 'Anexo existente',
+      'Removido',
+      'Anexo de CRLV removido da placa.'
+    );
+
+    setVehicles(updatedVehicles);
+    setCrlvVehicle(updatedVehicle);
+    if (selectedVehicle?.id === vehicle.id) setSelectedVehicle(updatedVehicle);
   };
 
   // Synchronize state with db helper
@@ -705,6 +788,11 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
   };
 
   // Audits logs compiled for this plate
+  const openCrlvModal = (vehicle: Veiculo) => {
+    setCrlvError('');
+    setCrlvVehicle(vehicle);
+  };
+
   const selectedVehicleAudits = useMemo(() => {
     if (!selectedVehicle) return [];
     return audits.filter(a => a.placa === selectedVehicle.placa);
@@ -828,9 +916,24 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                     >
                       <td className="p-4">
                         <div className="space-y-0.5">
-                          <span className="font-mono font-bold text-xs text-slate-800 bg-slate-100 px-2 py-1 border border-slate-200 rounded group-hover:border-blue-300 transition-colors shadow-xs">
-                            {veh.placa}
-                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="font-mono font-bold text-xs text-slate-800 bg-slate-100 px-2 py-1 border border-slate-200 rounded group-hover:border-blue-300 transition-colors shadow-xs">
+                              {veh.placa}
+                            </span>
+                            {vehicleHasCrlv(veh) && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  downloadVehicleCrlv(veh);
+                                }}
+                                className="px-2 py-1 rounded border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[11px] font-bold shadow-xs cursor-pointer transition-colors"
+                                title={`Baixar CRLV da placa ${veh.placa}`}
+                              >
+                                CRLV
+                              </button>
+                            )}
+                          </div>
                           <span className="text-xs text-slate-500 block pt-1 font-medium select-none">
                             {obterNomeEmpresa(veh.empresaId, companyOptions)}
                           </span>
@@ -1369,9 +1472,33 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
             <div className="shrink-0 sticky top-0 bg-white px-6 pt-5 relative z-20 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
               <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-5">
                 <div className="flex items-center gap-4">
-                  <span className="p-2 py-1 bg-slate-50 border border-slate-200 rounded font-mono font-bold text-slate-850 text-base shadow-xs">
-                    {selectedVehicle.placa}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="p-2 py-1 bg-slate-50 border border-slate-200 rounded font-mono font-bold text-slate-850 text-base shadow-xs">
+                      {selectedVehicle.placa}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => downloadVehicleCrlv(selectedVehicle)}
+                      className={`px-3 py-1.5 rounded-lg border text-xs font-bold shadow-xs cursor-pointer transition-colors ${vehicleHasCrlv(selectedVehicle)
+                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100'
+                        : 'bg-slate-100 border-slate-200 text-slate-500 hover:bg-slate-200'
+                        }`}
+                      title={vehicleHasCrlv(selectedVehicle) ? 'Baixar CRLV anexado' : 'Nenhum CRLV anexado para esta placa'}
+                    >
+                      CRLV
+                    </button>
+                    {canWrite && (
+                      <button
+                        type="button"
+                        onClick={() => openCrlvModal(selectedVehicle)}
+                        className="h-8 w-8 inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200 cursor-pointer shadow-xs transition-colors"
+                        title="Anexar ou remover CRLV da placa"
+                        aria-label="Editar CRLV da placa"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">
                       Ficha do Veículo ({selectedVehicle.tipoUnidade})
@@ -1678,6 +1805,95 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 )}
               </div>
 
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* CRLV Attachment Modal */}
+      {crlvVehicle && (
+        <div id="crlv-attachment-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 font-sans text-xs"
+          >
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+              <div>
+                <h3 className="text-sm font-bold uppercase text-blue-600 tracking-wider">
+                  CRLV da placa {crlvVehicle.placa}
+                </h3>
+                <p className="text-slate-500 mt-1">Anexe, baixe ou remova o documento salvo no cadastro do veículo.</p>
+              </div>
+              <button
+                onClick={() => setCrlvVehicle(null)}
+                className="text-slate-400 hover:text-slate-650 cursor-pointer p-1"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="font-bold text-slate-800">Documento atual</p>
+                  <p className="text-slate-500 break-all">{crlvVehicle.crlvAnexoNome || 'Nenhum CRLV anexado.'}</p>
+                </div>
+                <span className={`px-2 py-1 rounded-full border font-bold ${vehicleHasCrlv(crlvVehicle) ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-100 text-slate-500 border-slate-200'}`}>
+                  {vehicleHasCrlv(crlvVehicle) ? 'Anexado' : 'Pendente'}
+                </span>
+              </div>
+
+              <label className="flex items-center justify-center gap-2 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl cursor-pointer transition-colors shadow-xs font-bold">
+                <Upload className="h-4 w-4" />
+                Anexar/Substituir CRLV
+                <input
+                  type="file"
+                  accept=".pdf,image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = '';
+                    if (!file) return;
+                    try {
+                      await saveVehicleCrlv(crlvVehicle, file);
+                    } catch (error) {
+                      console.error('Erro ao salvar CRLV:', error);
+                      setCrlvError('Não foi possível salvar o CRLV. Tente novamente.');
+                    }
+                  }}
+                />
+              </label>
+
+              {crlvError && <p className="text-rose-600 font-semibold">{crlvError}</p>}
+            </div>
+
+            <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4">
+              <button
+                type="button"
+                onClick={() => downloadVehicleCrlv(crlvVehicle)}
+                disabled={!vehicleHasCrlv(crlvVehicle)}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-xs cursor-pointer transition-colors flex items-center justify-center gap-2"
+              >
+                <Download className="h-4 w-4" />
+                Baixar CRLV
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  try {
+                    await removeVehicleCrlv(crlvVehicle);
+                  } catch (error) {
+                    console.error('Erro ao remover CRLV:', error);
+                    setCrlvError('Não foi possível remover o CRLV. Tente novamente.');
+                  }
+                }}
+                disabled={!vehicleHasCrlv(crlvVehicle)}
+                className="px-4 py-2 bg-rose-50 hover:bg-rose-100 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed text-rose-700 font-bold rounded-xl border border-rose-200 shadow-xs cursor-pointer transition-colors flex items-center justify-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Remover anexo
+              </button>
             </div>
           </motion.div>
         </div>

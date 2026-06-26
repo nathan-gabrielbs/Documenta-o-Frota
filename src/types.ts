@@ -35,6 +35,8 @@ export interface Veiculo {
   cnpj?: string;
   status: StatusVeiculo;
   observacoes?: string;
+  crlvAnexoNome?: string;
+  crlvAnexoConteudo?: string;
   arrendado?: boolean;
   empresaArrendadora?: string;
   criadoPor: string; // Nome do usuário
