@@ -59,12 +59,24 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
   // Composition / Coupling dropdown states or refs
   const [couplingTargetId, setCouplingTargetId] = useState('');
+  const [couplingSlot, setCouplingSlot] = useState<'carreta1' | 'carreta2'>('carreta1');
   const [newVehicleDocumentType, setNewVehicleDocumentType] = useState('');
   const [newVehicleDocumentError, setNewVehicleDocumentError] = useState('');
 
   // Access control shortcuts
   const canWrite = currentUser.perfil !== 'Consulta';
   const isAdmin = currentUser.perfil === 'Administrador';
+  const COUPLING_UNIT_TYPES: TipoUnidade[] = ['Cavalo', 'Carreta', 'Porta Container'];
+  const TRAILER_UNIT_TYPES: TipoUnidade[] = ['Carreta', 'Porta Container'];
+
+  const isCouplingUnit = (tipoUnidade: TipoUnidade) => COUPLING_UNIT_TYPES.includes(tipoUnidade);
+  const isTrailerUnit = (tipoUnidade: TipoUnidade) => TRAILER_UNIT_TYPES.includes(tipoUnidade);
+  const getHorseTrailerIds = (horse: Veiculo) => [horse.carretaVinculadaId, horse.carreta2VinculadaId].filter(Boolean) as string[];
+  const getFirstAvailableTrailerSlot = (horse: Veiculo): 'carretaVinculadaId' | 'carreta2VinculadaId' | null => {
+    if (!horse.carretaVinculadaId) return 'carretaVinculadaId';
+    if (!horse.carreta2VinculadaId) return 'carreta2VinculadaId';
+    return null;
+  };
 
   // Synchronize state with db helper
   const reloadFromDB = () => {
@@ -89,6 +101,16 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     return () => {
       document.body.style.overflow = previousOverflow;
     };
+  }, [selectedVehicle]);
+
+  useEffect(() => {
+    if (selectedVehicle?.tipoUnidade !== 'Cavalo') return;
+    const firstFreeSlot = getFirstAvailableTrailerSlot(selectedVehicle);
+    if (firstFreeSlot === 'carreta2VinculadaId') {
+      setCouplingSlot('carreta2');
+    } else {
+      setCouplingSlot('carreta1');
+    }
   }, [selectedVehicle]);
 
   // Filter local lists
@@ -331,19 +353,29 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     setDeleteConfirmVehicle(null);
   };
 
-  // Coupling Logic (Vincular Cavalo e Carreta)
-  const handleCoupleUnits = (cavaloId: string, carretaId: string) => {
+  // Coupling Logic (Vincular Cavalo e até duas Carretas/Porta Container)
+  const handleCoupleUnits = (cavaloId: string, carretaId: string, requestedSlot?: 'carreta1' | 'carreta2') => {
     if (!cavaloId || !carretaId) return;
 
     const cavalo = vehicles.find(v => v.id === cavaloId);
     const carreta = vehicles.find(v => v.id === carretaId);
 
     if (!cavalo || !carreta) return;
+    if (cavalo.tipoUnidade !== 'Cavalo' || !isTrailerUnit(carreta.tipoUnidade)) return;
+    if (cavalo.empresaId !== carreta.empresaId || carreta.cavaloVinculadoId) return;
+
+    const slotField = requestedSlot === 'carreta2'
+      ? (!cavalo.carreta2VinculadaId ? 'carreta2VinculadaId' : null)
+      : requestedSlot === 'carreta1'
+        ? (!cavalo.carretaVinculadaId ? 'carretaVinculadaId' : null)
+        : getFirstAvailableTrailerSlot(cavalo);
+
+    if (!slotField) return;
 
     // Save changes inside both objects
     const updated = vehicles.map(v => {
       if (v.id === cavaloId) {
-        return { ...v, carretaVinculadaId: carretaId, dataAtualizacao: new Date().toISOString(), atualizadoPor: currentUser.nome };
+        return { ...v, [slotField]: carretaId, dataAtualizacao: new Date().toISOString(), atualizadoPor: currentUser.nome };
       }
       if (v.id === carretaId) {
         return { ...v, cavaloVinculadoId: cavaloId, dataAtualizacao: new Date().toISOString(), atualizadoPor: currentUser.nome };
@@ -353,6 +385,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
     dbInLocalStorage.saveVehicles(updated);
 
+    const trailerLabel = slotField === 'carreta2VinculadaId' ? 'CARRETA 2' : 'CARRETA 1';
+
     // Log audit events
     dbInLocalStorage.logAudit(
       currentUser,
@@ -360,7 +394,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
       'vinculação',
       'acoplamento de conjunto',
       'Nenhum',
-      `Vinculado à carreta ${carreta.placa}`,
+      `Vinculado à ${trailerLabel} ${carreta.placa}`,
       'Composição rodoviária criada com sucesso.'
     );
 
@@ -370,25 +404,26 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
       'vinculação',
       'acoplamento de conjunto',
       'Nenhum',
-      `Vinculado ao cavalo ${cavalo.placa}`,
+      `Vinculado ao cavalo ${cavalo.placa} como ${trailerLabel}`,
       'Composição rodoviária criada com sucesso.'
     );
 
     reloadFromDB();
     setCouplingTargetId('');
-    
+    setCouplingSlot('carreta1');
+
     // Refresh modal view
-    setSelectedVehicle(updated.find(v => v.id === cavaloId) || null);
+    setSelectedVehicle(updated.find(v => v.id === selectedVehicle?.id) || null);
   };
 
   // Decoupling Logic (Desvincular Cavalo e Carreta)
-  const handleDecoupleUnits = (vehicleId: string) => {
+  const handleDecoupleUnits = (vehicleId: string, specificLinkedId?: string) => {
     const vRef = vehicles.find(v => v.id === vehicleId);
     if (!vRef) return;
 
     let linkedId = '';
     if (vRef.tipoUnidade === 'Cavalo') {
-      linkedId = vRef.carretaVinculadaId || '';
+      linkedId = specificLinkedId || vRef.carretaVinculadaId || vRef.carreta2VinculadaId || '';
     } else {
       linkedId = vRef.cavaloVinculadoId || '';
     }
@@ -400,7 +435,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
       if (v.id === vehicleId) {
         return { 
           ...v, 
-          carretaVinculadaId: undefined, 
+          carretaVinculadaId: v.id === vehicleId && v.carretaVinculadaId !== linkedId ? v.carretaVinculadaId : undefined, 
+          carreta2VinculadaId: v.id === vehicleId && v.carreta2VinculadaId !== linkedId ? v.carreta2VinculadaId : undefined, 
           cavaloVinculadoId: undefined, 
           dataAtualizacao: new Date().toISOString(), 
           atualizadoPor: currentUser.nome 
@@ -410,6 +446,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
         return { 
           ...v, 
           carretaVinculadaId: undefined, 
+          carreta2VinculadaId: undefined, 
           cavaloVinculadoId: undefined, 
           dataAtualizacao: new Date().toISOString(), 
           atualizadoPor: currentUser.nome 
@@ -557,11 +594,12 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
   const availableCouplings = useMemo(() => {
     if (!selectedVehicle) return [];
     if (selectedVehicle.tipoUnidade === 'Cavalo') {
-      // Return Carretas currently uncoupled of the same company
-      return vehicles.filter(v => (v.tipoUnidade === 'Carreta' || v.tipoUnidade === 'Porta Container') && !v.cavaloVinculadoId && v.empresaId === selectedVehicle.empresaId);
-    } else if (selectedVehicle.tipoUnidade === 'Carreta' || selectedVehicle.tipoUnidade === 'Porta Container') {
-      // Return Cavalos currently uncoupled of the same company
-      return vehicles.filter(v => v.tipoUnidade === 'Cavalo' && !v.carretaVinculadaId && v.empresaId === selectedVehicle.empresaId);
+      if (!getFirstAvailableTrailerSlot(selectedVehicle)) return [];
+      // Return Carretas/Porta Container currently uncoupled of the same company
+      return vehicles.filter(v => isTrailerUnit(v.tipoUnidade) && !v.cavaloVinculadoId && v.empresaId === selectedVehicle.empresaId);
+    } else if (isTrailerUnit(selectedVehicle.tipoUnidade)) {
+      // Return Cavalos with at least one free trailer slot of the same company
+      return vehicles.filter(v => v.tipoUnidade === 'Cavalo' && Boolean(getFirstAvailableTrailerSlot(v)) && v.empresaId === selectedVehicle.empresaId);
     }
     return [];
   }, [vehicles, selectedVehicle]);
@@ -572,24 +610,23 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     return documents.filter(d => d.veiculoId === selectedVehicle.id || d.placa === selectedVehicle.placa);
   }, [selectedVehicle, documents]);
 
-  // Check the linked counterpart in Cavalo + Carreta composition
-  const selectedLinkedVehicle = useMemo(() => {
-    if (!selectedVehicle) return null;
-    const twinId = selectedVehicle.tipoUnidade === 'Cavalo' 
-      ? selectedVehicle.carretaVinculadaId 
-      : selectedVehicle.cavaloVinculadoId;
-    if (!twinId) return null;
-    return vehicles.find(v => v.id === twinId) || null;
+  // Check linked counterparts in Cavalo + Carreta 1 + Carreta 2 composition
+  const selectedLinkedVehicles = useMemo(() => {
+    if (!selectedVehicle) return [];
+    const linkedIds = selectedVehicle.tipoUnidade === 'Cavalo'
+      ? getHorseTrailerIds(selectedVehicle)
+      : selectedVehicle.cavaloVinculadoId ? [selectedVehicle.cavaloVinculadoId] : [];
+    return linkedIds.map(id => vehicles.find(v => v.id === id)).filter(Boolean) as Veiculo[];
   }, [selectedVehicle, vehicles]);
 
-  // Combined documents of Cavalo + Carreta set
+  // Combined documents of Cavalo + Carreta 1 + Carreta 2 set
   const ensembleDocs = useMemo(() => {
     if (!selectedVehicle) return [];
     const directDocs = documents.filter(d => d.veiculoId === selectedVehicle.id || d.placa === selectedVehicle.placa);
-    if (!selectedLinkedVehicle) return directDocs;
-    const twinDocs = documents.filter(d => d.veiculoId === selectedLinkedVehicle.id || d.placa === selectedLinkedVehicle.placa);
+    if (selectedLinkedVehicles.length === 0) return directDocs;
+    const twinDocs = selectedLinkedVehicles.flatMap(linkedVehicle => documents.filter(d => d.veiculoId === linkedVehicle.id || d.placa === linkedVehicle.placa));
     return [...directDocs, ...twinDocs];
-  }, [selectedVehicle, selectedLinkedVehicle, documents]);
+  }, [selectedVehicle, selectedLinkedVehicles, documents]);
 
   // Audits logs compiled for this plate
   const selectedVehicleAudits = useMemo(() => {
@@ -701,11 +738,11 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                   const isTrailer = veh.tipoUnidade === 'Carreta' || veh.tipoUnidade === 'Porta Container';
                   
                   // counterpart plate lookup
-                  const linkedRefObj = veh.carretaVinculadaId 
-                    ? vehicles.find(v => v.id === veh.carretaVinculadaId)
-                    : veh.cavaloVinculadoId 
-                      ? vehicles.find(v => v.id === veh.cavaloVinculadoId)
-                      : null;
+                  const linkedRefObjs = veh.tipoUnidade === 'Cavalo'
+                    ? getHorseTrailerIds(veh).map(id => vehicles.find(v => v.id === id)).filter(Boolean) as Veiculo[]
+                    : veh.cavaloVinculadoId
+                      ? vehicles.filter(v => v.id === veh.cavaloVinculadoId)
+                      : [];
 
                   return (
                     <tr 
@@ -753,18 +790,22 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                       </td>
 
                       <td className="p-4" onClick={(e) => e.stopPropagation()}>
-                        {linkedRefObj ? (
-                          <div className="flex items-center gap-2">
+                        {linkedRefObjs.length > 0 ? (
+                          <div className="flex flex-wrap items-center gap-2">
+                            {linkedRefObjs.map((linkedRefObj) => (
+                            <div key={linkedRefObj.id} className="flex items-center gap-1">
                             <span className="p-1 px-1.5 text-xs font-mono border border-slate-200 bg-slate-50 rounded text-slate-700 font-bold shadow-xs">
                               {linkedRefObj.placa}
                             </span>
                             <button
-                              onClick={() => handleDecoupleUnits(veh.id)}
+                              onClick={() => handleDecoupleUnits(veh.id, linkedRefObj.id)}
                               title="Desvincular composição"
                               className="p-1 bg-slate-100 text-slate-500 hover:text-rose-600 rounded cursor-pointer hover:bg-slate-200 transition-colors"
                             >
                               <Unlink className="h-3 w-3" />
                             </button>
+                            </div>
+                            ))}
                           </div>
                         ) : (
                           <span className="text-xs text-slate-400 italic font-sans select-none">
@@ -1334,6 +1375,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 <div className="md:col-span-2 space-y-5">
                   
                   {/* COUPLING BLOCK (Requirement 4) */}
+                  {isCouplingUnit(selectedVehicle.tipoUnidade) && (
                   <div className="bg-slate-50 p-4 border border-slate-200 rounded-xl space-y-3.5">
                     <div className="flex items-center justify-between">
                       <h4 className="font-bold text-blue-600 uppercase tracking-widest text-xs">
@@ -1344,22 +1386,25 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                       </div>
                     </div>
 
-                    {selectedLinkedVehicle ? (
-                      <div className="p-3.5 rounded-xl border border-blue-200 bg-blue-50/50 flex items-center justify-between gap-6">
+                    {selectedLinkedVehicles.length > 0 ? (
+                      <>
+                      <div className="space-y-2">
+                        {selectedLinkedVehicles.map((linkedVehicle, index) => (
+                      <div key={linkedVehicle.id} className="p-3.5 rounded-xl border border-blue-200 bg-blue-50/50 flex items-center justify-between gap-6">
                         <div className="flex items-center gap-4">
                           <div className="p-2 bg-blue-100 border border-blue-200 text-blue-600 rounded-lg">
                             <Truck className="h-5 w-5" />
                           </div>
                           <div>
-                            <span className="text-xs text-blue-650 block font-bold uppercase tracking-tight">Conjunto Ativo</span>
-                            <span className="font-mono font-bold text-slate-900 text-xs">{selectedLinkedVehicle.placa}</span>
-                            <span className="text-xs text-slate-500 block">{selectedLinkedVehicle.tipoUnidade} • {selectedLinkedVehicle.modelo}</span>
+                            <span className="text-xs text-blue-650 block font-bold uppercase tracking-tight">{selectedVehicle.tipoUnidade === 'Cavalo' ? `CARRETA ${index + 1}` : 'CAVALO ACOPLADO'}</span>
+                            <span className="font-mono font-bold text-slate-900 text-xs">{linkedVehicle.placa}</span>
+                            <span className="text-xs text-slate-500 block">{linkedVehicle.tipoUnidade} • {linkedVehicle.modelo}</span>
                           </div>
                         </div>
 
                         {canWrite && (
                           <button
-                            onClick={() => handleDecoupleUnits(selectedVehicle.id)}
+                            onClick={() => handleDecoupleUnits(selectedVehicle.id, linkedVehicle.id)}
                             className="p-2 px-3 bg-rose-50 border border-rose-200 text-rose-700 hover:bg-rose-100/70 rounded-xl text-xs font-bold cursor-pointer flex items-center gap-1.5 transition-all active:scale-[0.98]"
                           >
                             <Unlink className="h-3.5 w-3.5" />
@@ -1367,14 +1412,61 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                           </button>
                         )}
                       </div>
+                        ))}
+                      </div>
+                        {canWrite && selectedVehicle.tipoUnidade === 'Cavalo' && availableCouplings.length > 0 && (
+                          <div className="flex gap-2 text-xs pt-2">
+                            <select
+                              id="couple-slot-select-active"
+                              value={couplingSlot}
+                              onChange={(e) => setCouplingSlot(e.target.value as 'carreta1' | 'carreta2')}
+                              className="bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs font-semibold cursor-pointer"
+                            >
+                              <option value="carreta1" disabled={Boolean(selectedVehicle.carretaVinculadaId)}>CARRETA 1</option>
+                              <option value="carreta2" disabled={Boolean(selectedVehicle.carreta2VinculadaId)}>CARRETA 2</option>
+                            </select>
+                            <select
+                              id="couple-target-select-active"
+                              value={couplingTargetId}
+                              onChange={(e) => setCouplingTargetId(e.target.value)}
+                              className="bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all flex-1 text-xs font-semibold cursor-pointer"
+                            >
+                              <option value="">-- Selecione a Carreta/Porta Container Disponível --</option>
+                              {availableCouplings.map(item => (
+                                <option key={item.id} value={item.id}>
+                                  [{item.placa}] {item.modelo}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              disabled={!couplingTargetId}
+                              onClick={() => handleCoupleUnits(selectedVehicle.id, couplingTargetId, couplingSlot)}
+                              className="px-4 py-1.5 bg-blue-600 disabled:opacity-50 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer transition-all shrink-0 font-sans shadow-xs"
+                            >
+                              Acoplar
+                            </button>
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-3">
                         <div className="text-sm text-slate-500 leading-normal">
                           Este veículo está operando de forma <strong className="text-slate-800">individual</strong> e independente no sistema. Vincule com uma licença da mesma empresa corporativa.
                         </div>
 
-                        {canWrite && (selectedVehicle.tipoUnidade === 'Cavalo' || selectedVehicle.tipoUnidade === 'Carreta' || selectedVehicle.tipoUnidade === 'Porta Container') && (
+                        {canWrite && isCouplingUnit(selectedVehicle.tipoUnidade) && availableCouplings.length > 0 && (
                           <div className="flex gap-2 text-xs">
+                            {selectedVehicle.tipoUnidade === 'Cavalo' && (
+                              <select
+                                id="couple-slot-select"
+                                value={couplingSlot}
+                                onChange={(e) => setCouplingSlot(e.target.value as 'carreta1' | 'carreta2')}
+                                className="bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs font-semibold cursor-pointer"
+                              >
+                                <option value="carreta1" disabled={Boolean(selectedVehicle.carretaVinculadaId)}>CARRETA 1</option>
+                                <option value="carreta2" disabled={Boolean(selectedVehicle.carreta2VinculadaId)}>CARRETA 2</option>
+                              </select>
+                            )}
                             <select
                                 id="couple-target-select"
                                 value={couplingTargetId}
@@ -1393,7 +1485,8 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                               disabled={!couplingTargetId}
                               onClick={() => handleCoupleUnits(
                                 selectedVehicle.tipoUnidade === 'Cavalo' ? selectedVehicle.id : couplingTargetId,
-                                selectedVehicle.tipoUnidade === 'Cavalo' ? couplingTargetId : selectedVehicle.id
+                                selectedVehicle.tipoUnidade === 'Cavalo' ? couplingTargetId : selectedVehicle.id,
+                                selectedVehicle.tipoUnidade === 'Cavalo' ? couplingSlot : undefined
                               )}
                               className="px-4 py-1.5 bg-blue-600 disabled:opacity-50 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer transition-all shrink-0 font-sans shadow-xs"
                             >
@@ -1404,6 +1497,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                       </div>
                     )}
                   </div>
+                  )}
 
                   {/* DOCUMENTS APPLICABILITY CONFIG (Requirement 4) */}
                   <div className="bg-slate-50 p-4 border border-slate-200 rounded-xl space-y-4">
@@ -1493,7 +1587,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               {selectedLinkedVehicle && (
                 <div className="mt-6 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                   <h4 className="font-bold text-blue-600 uppercase tracking-widest text-xs pb-1.5 border-b border-slate-200">
-                    Visão Geral do Conjunto Completo ({selectedVehicle.placa} + {selectedLinkedVehicle.placa})
+                    Visão Geral do Conjunto Completo ({selectedVehicle.placa} + {linkedVehicle.placa})
                   </h4>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
