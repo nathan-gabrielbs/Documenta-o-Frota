@@ -58,8 +58,6 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
   const [formError, setFormError] = useState('');
 
   // Composition / Coupling dropdown states or refs
-  const [couplingTargetId, setCouplingTargetId] = useState('');
-  const [couplingSlot, setCouplingSlot] = useState<'carreta1' | 'carreta2'>('carreta1');
   const [newVehicleDocumentType, setNewVehicleDocumentType] = useState('');
   const [newVehicleDocumentError, setNewVehicleDocumentError] = useState('');
 
@@ -103,15 +101,6 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     };
   }, [selectedVehicle]);
 
-  useEffect(() => {
-    if (selectedVehicle?.tipoUnidade !== 'Cavalo') return;
-    const firstFreeSlot = getFirstAvailableTrailerSlot(selectedVehicle);
-    if (firstFreeSlot === 'carreta2VinculadaId') {
-      setCouplingSlot('carreta2');
-    } else {
-      setCouplingSlot('carreta1');
-    }
-  }, [selectedVehicle]);
 
   // Filter local lists
   const filteredVehicles = useMemo(() => {
@@ -409,9 +398,6 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     );
 
     reloadFromDB();
-    setCouplingTargetId('');
-    setCouplingSlot('carreta1');
-
     // Refresh modal view
     setSelectedVehicle(updated.find(v => v.id === selectedVehicle?.id) || null);
   };
@@ -627,6 +613,75 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     const twinDocs = selectedLinkedVehicles.flatMap(linkedVehicle => documents.filter(d => d.veiculoId === linkedVehicle.id || d.placa === linkedVehicle.placa));
     return [...directDocs, ...twinDocs];
   }, [selectedVehicle, selectedLinkedVehicles, documents]);
+
+  const renderAutoCouplingControls = () => {
+    if (!selectedVehicle || !canWrite || !isCouplingUnit(selectedVehicle.tipoUnidade) || availableCouplings.length === 0) return null;
+
+    if (selectedVehicle.tipoUnidade === 'Cavalo') {
+      const trailerSlots: Array<{ slot: 'carreta1' | 'carreta2'; label: string; occupied: boolean }> = [
+        { slot: 'carreta1', label: 'Selecionar CARRETA 1', occupied: Boolean(selectedVehicle.carretaVinculadaId) },
+        { slot: 'carreta2', label: 'Selecionar CARRETA 2', occupied: Boolean(selectedVehicle.carreta2VinculadaId) }
+      ];
+
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+          {trailerSlots.map(({ slot, label, occupied }) => (
+            <label
+              key={slot}
+              className={`flex items-center gap-2 rounded-xl border px-3 py-2 transition-all ${
+                occupied
+                  ? 'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed'
+                  : 'bg-white border-blue-200 text-slate-800 hover:border-blue-400 hover:bg-blue-50 cursor-pointer shadow-xs'
+              }`}
+            >
+              <Truck className={`h-4 w-4 shrink-0 ${occupied ? 'text-slate-400' : 'text-blue-600'}`} />
+              <select
+                id={`couple-${slot}-select`}
+                value=""
+                disabled={occupied}
+                onChange={(e) => {
+                  const carretaId = e.target.value;
+                  if (!carretaId) return;
+                  handleCoupleUnits(selectedVehicle.id, carretaId, slot);
+                }}
+                className="w-full bg-transparent text-xs font-bold uppercase tracking-wide outline-none cursor-pointer disabled:cursor-not-allowed"
+              >
+                <option value="">{occupied ? `${label} já acoplada` : label}</option>
+                {availableCouplings.map(item => (
+                  <option key={item.id} value={item.id}>
+                    [{item.placa}] {item.modelo}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ))}
+        </div>
+      );
+    }
+
+    return (
+      <label className="flex items-center gap-2 rounded-xl border border-blue-200 bg-white px-3 py-2 text-xs text-slate-800 hover:border-blue-400 hover:bg-blue-50 cursor-pointer shadow-xs transition-all">
+        <Truck className="h-4 w-4 shrink-0 text-blue-600" />
+        <select
+          id="couple-horse-select"
+          value=""
+          onChange={(e) => {
+            const cavaloId = e.target.value;
+            if (!cavaloId) return;
+            handleCoupleUnits(cavaloId, selectedVehicle.id);
+          }}
+          className="w-full bg-transparent text-xs font-bold uppercase tracking-wide outline-none cursor-pointer"
+        >
+          <option value="">Selecionar CAVALO disponível</option>
+          {availableCouplings.map(item => (
+            <option key={item.id} value={item.id}>
+              [{item.placa}] {item.modelo}
+            </option>
+          ))}
+        </select>
+      </label>
+    );
+  };
 
   // Audits logs compiled for this plate
   const selectedVehicleAudits = useMemo(() => {
@@ -1414,86 +1469,16 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                       </div>
                         ))}
                       </div>
-                        {canWrite && selectedVehicle.tipoUnidade === 'Cavalo' && availableCouplings.length > 0 && (
-                          <div className="flex gap-2 text-xs pt-2">
-                            <select
-                              id="couple-slot-select-active"
-                              value={couplingSlot}
-                              onChange={(e) => setCouplingSlot(e.target.value as 'carreta1' | 'carreta2')}
-                              className="bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs font-semibold cursor-pointer"
-                            >
-                              <option value="carreta1" disabled={Boolean(selectedVehicle.carretaVinculadaId)}>CARRETA 1</option>
-                              <option value="carreta2" disabled={Boolean(selectedVehicle.carreta2VinculadaId)}>CARRETA 2</option>
-                            </select>
-                            <select
-                              id="couple-target-select-active"
-                              value={couplingTargetId}
-                              onChange={(e) => setCouplingTargetId(e.target.value)}
-                              className="bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all flex-1 text-xs font-semibold cursor-pointer"
-                            >
-                              <option value="">-- Selecione a Carreta/Porta Container Disponível --</option>
-                              {availableCouplings.map(item => (
-                                <option key={item.id} value={item.id}>
-                                  [{item.placa}] {item.modelo}
-                                </option>
-                              ))}
-                            </select>
-                            <button
-                              disabled={!couplingTargetId}
-                              onClick={() => handleCoupleUnits(selectedVehicle.id, couplingTargetId, couplingSlot)}
-                              className="px-4 py-1.5 bg-blue-600 disabled:opacity-50 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer transition-all shrink-0 font-sans shadow-xs"
-                            >
-                              Acoplar
-                            </button>
-                          </div>
-                        )}
+                        <div className="pt-2">
+                          {renderAutoCouplingControls()}
+                        </div>
                       </>
                     ) : (
                       <div className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-3">
                         <div className="text-sm text-slate-500 leading-normal">
                           Este veículo está operando de forma <strong className="text-slate-800">individual</strong> e independente no sistema. Vincule com uma licença da mesma empresa corporativa.
                         </div>
-
-                        {canWrite && isCouplingUnit(selectedVehicle.tipoUnidade) && availableCouplings.length > 0 && (
-                          <div className="flex gap-2 text-xs">
-                            {selectedVehicle.tipoUnidade === 'Cavalo' && (
-                              <select
-                                id="couple-slot-select"
-                                value={couplingSlot}
-                                onChange={(e) => setCouplingSlot(e.target.value as 'carreta1' | 'carreta2')}
-                                className="bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs font-semibold cursor-pointer"
-                              >
-                                <option value="carreta1" disabled={Boolean(selectedVehicle.carretaVinculadaId)}>CARRETA 1</option>
-                                <option value="carreta2" disabled={Boolean(selectedVehicle.carreta2VinculadaId)}>CARRETA 2</option>
-                              </select>
-                            )}
-                            <select
-                                id="couple-target-select"
-                                value={couplingTargetId}
-                                onChange={(e) => setCouplingTargetId(e.target.value)}
-                                className="bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all flex-1 text-xs font-semibold cursor-pointer"
-                            >
-                              <option value="">-- Selecione {selectedVehicle.tipoUnidade === 'Cavalo' ? 'a Carreta/Porta Container' : 'o Cavalo'} Disponível --</option>
-                              {availableCouplings.map(item => (
-                                <option key={item.id} value={item.id}>
-                                  [{item.placa}] {item.modelo}
-                                </option>
-                              ))}
-                            </select>
-
-                            <button
-                              disabled={!couplingTargetId}
-                              onClick={() => handleCoupleUnits(
-                                selectedVehicle.tipoUnidade === 'Cavalo' ? selectedVehicle.id : couplingTargetId,
-                                selectedVehicle.tipoUnidade === 'Cavalo' ? couplingTargetId : selectedVehicle.id,
-                                selectedVehicle.tipoUnidade === 'Cavalo' ? couplingSlot : undefined
-                              )}
-                              className="px-4 py-1.5 bg-blue-600 disabled:opacity-50 hover:bg-blue-700 text-white font-bold rounded-lg cursor-pointer transition-all shrink-0 font-sans shadow-xs"
-                            >
-                              Acoplar
-                            </button>
-                          </div>
-                        )}
+                        {renderAutoCouplingControls()}
                       </div>
                     )}
                   </div>
@@ -1584,10 +1569,10 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               </div>
 
               {/* SECTION: ENSEMBLE COMPLIANCE OVERVIEW (If Twin Coupled) */}
-              {selectedLinkedVehicle && (
+              {selectedLinkedVehicles.length > 0 && (
                 <div className="mt-6 bg-slate-50 border border-slate-200 rounded-xl p-4 space-y-3">
                   <h4 className="font-bold text-blue-600 uppercase tracking-widest text-xs pb-1.5 border-b border-slate-200">
-                    Visão Geral do Conjunto Completo ({selectedVehicle.placa} + {linkedVehicle.placa})
+                    Visão Geral do Conjunto Completo ({[selectedVehicle.placa, ...selectedLinkedVehicles.map(linkedVehicle => linkedVehicle.placa)].join(' + ')})
                   </h4>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
