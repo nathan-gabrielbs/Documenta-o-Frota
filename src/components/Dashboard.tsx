@@ -302,7 +302,7 @@ const statsByCompany = useMemo(() => {
             Painel Geral de Conformidade
           </h1>
           <p className="text-sm text-slate-500">
-            Acompanhamento de documentos exigíveis (CIV, CIPP, INMETRO, Tacógrafo e Laudos).
+            Acompanhamento de documentos e laudos exigíveis
           </p>
         </div>
 
