@@ -44,7 +44,8 @@ export interface Veiculo {
   
   // Vínculos
   cavaloVinculadoId?: string; // Se for reboque/carreta, ID do cavalo mecânico
-  carretaVinculadaId?: string; // Se for cavalo, ID da carreta acoplada
+  carretaVinculadaId?: string; // Se for cavalo, ID da carreta 1 acoplada
+  carreta2VinculadaId?: string; // Se for cavalo, ID da carreta 2 acoplada
 }
 
 export type TipoDocumento = string;
