@@ -39,6 +39,7 @@ export interface Veiculo {
   crlvAnexoConteudo?: string;
   arrendado?: boolean;
   empresaArrendadora?: string;
+  baseOperacional?: string;
   criadoPor: string; // Nome do usuário
   atualizadoPor: string; // Nome do usuário
   dataCadastro: string;

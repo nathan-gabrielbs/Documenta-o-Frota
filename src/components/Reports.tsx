@@ -13,6 +13,7 @@ import {
 import { Veiculo, Documento, Empresa, Usuario, AuditoriaLog, TipoUnidade } from '../types';
 import { dbInLocalStorage, PREDEFINED_COMPANIES } from '../utils/mockdb';
 import { EMPRESAS_PADRAO, obterNomeEmpresa } from '../utils/empresaUtils';
+import { getVehicleBaseLabel } from '../utils/vehicleBaseUtils';
 
 interface ReportsProps {
   currentUser: Usuario;
@@ -719,6 +720,11 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
                       <span className="font-mono bg-white border border-slate-200 text-slate-800 px-2 py-0.5 rounded font-bold text-sm shadow-xs">
                         {log.placa}
                       </span>
+                      {getVehicleBaseLabel(vehicles.find(v => v.id === log.veiculoId || v.placa === log.placa)) && (
+                        <span className="text-[11px] bg-blue-50 border border-blue-200 text-blue-700 rounded px-1.5 py-0.5 font-bold">
+                          {getVehicleBaseLabel(vehicles.find(v => v.id === log.veiculoId || v.placa === log.placa))}
+                        </span>
+                      )}
                       <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 rounded uppercase">
                         {obterNomeEmpresa(log.empresaId, companies)}
                       </span>

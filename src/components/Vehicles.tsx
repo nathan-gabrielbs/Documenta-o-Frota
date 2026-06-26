@@ -13,6 +13,7 @@ import {
 import { Veiculo, Documento, Usuario, TipoUnidade, StatusVeiculo } from '../types';
 import { dbInLocalStorage, PREDEFINED_COMPANIES, isDocumentApplicable } from '../utils/mockdb';
 import { EMPRESAS_PADRAO, obterNomeEmpresa } from '../utils/empresaUtils';
+import { BASES_POTENCIAL_COMBUSTIVEIS, getVehicleBaseLabel, isPotencialCombustiveisVehicle } from '../utils/vehicleBaseUtils';
 
 interface VehiclesProps {
   currentUser: Usuario;
@@ -58,6 +59,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
   const [newObs, setNewObs] = useState('');
   const [newArrendado, setNewArrendado] = useState(false);
   const [newEmpresaArrendadora, setNewEmpresaArrendadora] = useState('');
+  const [newBaseOperacional, setNewBaseOperacional] = useState('');
   const [formError, setFormError] = useState('');
 
   // Composition / Coupling dropdown states or refs
@@ -286,6 +288,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
       observacoes: newObs,
       arrendado: newArrendado,
       empresaArrendadora: newArrendado ? newEmpresaArrendadora.trim() : '',
+      baseOperacional: newCompany === 'empresa-potencial-combustiveis' ? newBaseOperacional : '',
       criadoPor: currentUser.nome,
       atualizadoPor: currentUser.nome,
       dataCadastro: nowISO,
@@ -346,6 +349,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     setNewObs('');
     setNewArrendado(false);
     setNewEmpresaArrendadora('');
+    setNewBaseOperacional('');
   };
 
   // Open Edit Modal for a specific vehicle
@@ -396,6 +400,17 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
         original.status,
         editingVehicle.status,
         'Atualização de status do veículo.'
+      );
+    }
+    if ((original.baseOperacional || '') !== (editingVehicle.baseOperacional || '')) {
+      dbInLocalStorage.logAudit(
+        currentUser,
+        editingVehicle,
+        'edição',
+        'base operacional',
+        original.baseOperacional || 'Base não definida',
+        editingVehicle.baseOperacional || 'Base não definida',
+        'Atualização da base da placa POTENCIAL COMBUSTÍVEIS.'
       );
     }
     if ((original.arrendado || false) !== (editingVehicle.arrendado || false) || (original.empresaArrendadora || '') !== (editingVehicle.empresaArrendadora || '')) {
@@ -953,6 +968,11 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                             <span className="font-mono font-bold text-xs text-slate-800 bg-slate-100 px-2 py-1 border border-slate-200 rounded group-hover:border-blue-300 transition-colors shadow-xs">
                               {veh.placa}
                             </span>
+                            {getVehicleBaseLabel(veh) && (
+                              <span className="px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 text-[11px] font-bold shadow-xs" title="Base operacional">
+                                {getVehicleBaseLabel(veh)}
+                              </span>
+                            )}
                             {vehicleHasCrlv(veh) && (
                               <button
                                 type="button"
@@ -1125,7 +1145,10 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                   <select
                     id="new-company-select"
                     value={newCompany}
-                    onChange={(e) => setNewCompany(e.target.value)}
+                    onChange={(e) => {
+                      setNewCompany(e.target.value);
+                      if (e.target.value !== 'empresa-potencial-combustiveis') setNewBaseOperacional('');
+                    }}
                     className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs font-medium cursor-pointer"
                   >
                     {companyOptions.map(c => (
@@ -1134,6 +1157,25 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                   </select>
                 </div>
               </div>
+
+              {newCompany === 'empresa-potencial-combustiveis' && (
+                <div>
+                  <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
+                    Base POTENCIAL COMBUSTÍVEIS
+                  </label>
+                  <select
+                    id="new-base-operacional-select"
+                    value={newBaseOperacional}
+                    onChange={(e) => setNewBaseOperacional(e.target.value)}
+                    className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs font-medium cursor-pointer"
+                  >
+                    <option value="">Selecione a base</option>
+                    {BASES_POTENCIAL_COMBUSTIVEIS.map(base => (
+                      <option key={base} value={base}>{base}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -1175,6 +1217,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                   </select>
                 </div>
               </div>
+
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-2">
@@ -1330,7 +1373,11 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                   <select
                     id="edit-company-select"
                     value={editingVehicle.empresaId}
-                    onChange={(e) => setEditingVehicle({ ...editingVehicle, empresaId: e.target.value })}
+                    onChange={(e) => setEditingVehicle({
+                      ...editingVehicle,
+                      empresaId: e.target.value,
+                      baseOperacional: e.target.value === 'empresa-potencial-combustiveis' ? (editingVehicle.baseOperacional || '') : ''
+                    })}
                     className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs font-medium cursor-pointer"
                   >
                     {companyOptions.map(c => (
@@ -1357,6 +1404,25 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                   </select>
                 </div>
               </div>
+
+              {isPotencialCombustiveisVehicle(editingVehicle) && (
+                <div>
+                  <label className="block text-slate-505 mb-1 font-semibold uppercase tracking-wider text-xs">
+                    Base POTENCIAL COMBUSTÍVEIS
+                  </label>
+                  <select
+                    id="edit-base-operacional-select"
+                    value={editingVehicle.baseOperacional || ''}
+                    onChange={(e) => setEditingVehicle({ ...editingVehicle, baseOperacional: e.target.value })}
+                    className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs font-medium cursor-pointer"
+                  >
+                    <option value="">Selecione a base</option>
+                    {BASES_POTENCIAL_COMBUSTIVEIS.map(base => (
+                      <option key={base} value={base}>{base}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-2">
@@ -1520,6 +1586,11 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                     >
                       CRLV
                     </button>
+                    {getVehicleBaseLabel(selectedVehicle) && (
+                      <span className="px-3 py-1.5 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 text-xs font-bold shadow-xs" title="Base operacional da placa">
+                        {getVehicleBaseLabel(selectedVehicle)}
+                      </span>
+                    )}
                     {canWrite && (
                       <button
                         type="button"
