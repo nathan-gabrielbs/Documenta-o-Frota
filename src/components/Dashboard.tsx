@@ -10,12 +10,14 @@ import {
   HelpCircle, Eye, FileText, ArrowRight,
   TrendingUp, Award, Layers, Compass, Tag, Group
 } from 'lucide-react';
-import { Veiculo, Documento, Empresa } from '../types';
+import { Veiculo, Documento, Empresa, Usuario } from '../types';
 import { dbInLocalStorage, formatarDataBR } from '../utils/mockdb';
 import { obterNomeEmpresa } from '../utils/empresaUtils';
 import { getVehicleBaseLabel } from '../utils/vehicleBaseUtils';
+import { canAccessEmpresa, hasGeneralCompanyAccess } from '../utils/accessControl';
 
 interface DashboardProps {
+  currentUser: Usuario;
   onNavigateToVehicles: (plateSearch?: string) => void;
   onNavigateToDocuments: (plateSearch?: string) => void;
   selectedEmpresaGlobal: string;
@@ -23,6 +25,7 @@ interface DashboardProps {
 }
 
 export default function Dashboard({ 
+  currentUser,
   onNavigateToVehicles, 
   onNavigateToDocuments,
   selectedEmpresaGlobal,
@@ -78,7 +81,7 @@ export default function Dashboard({
   }, [vehicles, updateTrigger]);
 
   // Derive sets for selections
-  const activeVehicles = useMemo(() => vehicles.filter(v => v.status === 'ativo'), [vehicles]);
+  const activeVehicles = useMemo(() => vehicles.filter(v => v.status === 'ativo' && canAccessEmpresa(currentUser, v.empresaId)), [vehicles, currentUser]);
   const activeVehicleIds = useMemo(() => new Set(activeVehicles.map(v => v.id)), [activeVehicles]);
   const allPlates = useMemo(() => activeVehicles.map(v => v.placa).sort(), [activeVehicles]);
   
@@ -317,8 +320,8 @@ const statsByCompany = useMemo(() => {
               value={selectedEmpresaGlobal}
               onChange={(e) => setSelectedEmpresaGlobal(e.target.value)}
             >
-              <option value="">TODAS AS EMPRESAS</option>
-              {companies.map(c => (
+              {hasGeneralCompanyAccess(currentUser) && <option value="">TODAS AS EMPRESAS</option>}
+              {companies.filter(c => canAccessEmpresa(currentUser, c.id)).map(c => (
                 <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companies)}</option>
               ))}
             </select>
@@ -400,7 +403,7 @@ const statsByCompany = useMemo(() => {
                 onChange={(e) => setSelectedEmpresaLocal(e.target.value)}
                 className="bg-white border border-slate-200 px-3 py-2 rounded-lg text-slate-800 outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 transition-all font-medium shadow-sm cursor-pointer"
               >
-                {companies.map(c => (
+                {companies.filter(c => canAccessEmpresa(currentUser, c.id)).map(c => (
                   <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companies)}</option>
                 ))}
               </select>

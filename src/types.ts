@@ -12,7 +12,8 @@ export interface Usuario {
   nome: string;
   email: string;
   perfil: PerfilAcesso;
-  empresaId: string | null; // null significa acesso geral a todas as empresas
+  empresaId: string | null; // legado: null significa acesso geral a todas as empresas
+  empresaIds?: string[]; // empresas autorizadas; vazio/ausente significa acesso geral
   status: StatusUsuario;
   dataCriacao: string;
   ultimoAcesso: string;

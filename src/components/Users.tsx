@@ -15,11 +15,13 @@ import {
   AlertTriangle,
   Key,
   Mail,
+  Edit2,
 } from 'lucide-react';
 import { Usuario, PerfilAcesso, StatusUsuario } from '../types';
 import { dbInLocalStorage, PREDEFINED_COMPANIES } from '../utils/mockdb';
 import { EMPRESAS_PADRAO, obterNomeEmpresa } from '../utils/empresaUtils';
 import { authClient } from '../auth';
+import { getAuthorizedEmpresaIds } from '../utils/accessControl';
 
 interface UsersProps {
   currentUser: Usuario;
@@ -47,7 +49,8 @@ export default function UsersPanel({ currentUser }: UsersProps) {
   const [inputNome, setInputNome] = useState('');
   const [inputEmail, setInputEmail] = useState('');
   const [inputPerfil, setInputPerfil] = useState<PerfilAcesso>('Operacional');
-  const [inputEmpresa, setInputEmpresa] = useState<string>('');
+  const [inputEmpresas, setInputEmpresas] = useState<string[]>([]);
+  const [editingUser, setEditingUser] = useState<Usuario | null>(null);
 
   const isAdmin = currentUser.perfil === 'Administrador';
 
@@ -113,7 +116,8 @@ export default function UsersPanel({ currentUser }: UsersProps) {
       nome: cleanName,
       email: cleanEmail,
       perfil: inputPerfil,
-      empresaId: inputEmpresa || null,
+      empresaId: inputEmpresas[0] || null,
+      empresaIds: inputEmpresas,
       status: 'ativo',
       dataCriacao: new Date().toISOString().split('T')[0],
       ultimoAcesso: 'Nunca logou',
@@ -132,11 +136,79 @@ export default function UsersPanel({ currentUser }: UsersProps) {
     setInputNome('');
     setInputEmail('');
     setInputPerfil('Operacional');
-    setInputEmpresa('');
+    setInputEmpresas([]);
 
     setSystemAlertMessage(
       `Usuário ${cleanName} cadastrado com sucesso. A senha não é definida pelo painel administrativo. O usuário deve acessar a tela de login e usar "Primeiro acesso / Criar senha" para cadastrar a senha no Neon Auth.`
     );
+  };
+
+  const toggleEmpresaSelection = (empresaId: string) => {
+    setInputEmpresas((current) =>
+      current.includes(empresaId)
+        ? current.filter((id) => id !== empresaId)
+        : [...current, empresaId]
+    );
+  };
+
+  const openEditUser = (target: Usuario) => {
+    setEditingUser(target);
+    setInputNome(target.nome);
+    setInputEmail(target.email);
+    setInputPerfil(target.perfil);
+    setInputEmpresas(getAuthorizedEmpresaIds(target));
+    setFormError('');
+  };
+
+  const closeUserForm = () => {
+    setIsAddOpen(false);
+    setEditingUser(null);
+    setInputNome('');
+    setInputEmail('');
+    setInputPerfil('Operacional');
+    setInputEmpresas([]);
+    setFormError('');
+  };
+
+  const handleEditUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    setFormError('');
+
+    const cleanName = inputNome.trim();
+    const cleanEmail = inputEmail.trim().toLowerCase();
+
+    if (!cleanName || !cleanEmail) {
+      setFormError('Preencha os campos obrigatórios.');
+      return;
+    }
+
+    const emailCheck = users.some(
+      (u) => u.id !== editingUser.id && u.email.toLowerCase() === cleanEmail
+    );
+
+    if (emailCheck) {
+      setFormError('Este e-mail de acesso já está cadastrado.');
+      return;
+    }
+
+    const updated = users.map((u) =>
+      u.id === editingUser.id
+        ? {
+            ...u,
+            nome: cleanName,
+            email: cleanEmail,
+            perfil: inputPerfil,
+            empresaId: inputEmpresas[0] || null,
+            empresaIds: inputEmpresas,
+          }
+        : u
+    );
+
+    await dbInLocalStorage.saveUsers(updated);
+    setUsers(updated);
+    closeUserForm();
+    setSystemAlertMessage(`Cadastro de ${cleanName} atualizado com sucesso.`);
   };
 
   const toggleUserStatus = async (target: Usuario) => {
@@ -266,15 +338,15 @@ export default function UsersPanel({ currentUser }: UsersProps) {
       {/* Grid wrapper for add form + list */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
         {/* Left Col: Add Form */}
-        {isAdmin && isAddOpen && (
+        {isAdmin && (isAddOpen || editingUser) && (
           <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
             <div className="flex items-center justify-between border-b border-slate-100 pb-2">
               <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                Novo Integrante
+                {editingUser ? 'Editar Integrante' : 'Novo Integrante'}
               </h3>
 
               <button
-                onClick={() => setIsAddOpen(false)}
+                onClick={closeUserForm}
                 className="text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
               >
                 <X className="h-4.5 w-4.5" />
@@ -287,7 +359,7 @@ export default function UsersPanel({ currentUser }: UsersProps) {
               </div>
             )}
 
-            <form onSubmit={handleAddUser} className="space-y-4 text-sm font-sans">
+            <form onSubmit={editingUser ? handleEditUser : handleAddUser} className="space-y-4 text-sm font-sans">
               <div>
                 <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                   Nome Completo *
@@ -349,26 +421,37 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                   Limitar à Empresa (Opcional)
                 </label>
 
-                <select
-                  id="add-usercompany-select"
-                  value={inputEmpresa}
-                  onChange={(e) => setInputEmpresa(e.target.value)}
-                  className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
-                >
-                  <option value="">Acesso Geral (Todas Empresas)</option>
+                <div id="add-usercompany-select" className="space-y-2 rounded-xl border border-slate-200 bg-white p-3">
+                  <label className="flex items-center gap-2 text-xs font-bold text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={inputEmpresas.length === 0}
+                      onChange={() => setInputEmpresas([])}
+                      className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                    />
+                    Acesso Geral (Todas Empresas)
+                  </label>
 
-                  {companyOptions.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {obterNomeEmpresa(c.id, companyOptions)}
-                    </option>
-                  ))}
-                </select>
+                  <div className="grid grid-cols-1 gap-1.5 max-h-44 overflow-y-auto border-t border-slate-100 pt-2">
+                    {companyOptions.map((c) => (
+                      <label key={c.id} className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                        <input
+                          type="checkbox"
+                          checked={inputEmpresas.includes(c.id)}
+                          onChange={() => toggleEmpresaSelection(c.id)}
+                          className="h-4 w-4 rounded border-slate-300 text-blue-600"
+                        />
+                        {obterNomeEmpresa(c.id, companyOptions)}
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2.5 font-semibold">
                 <button
                   type="button"
-                  onClick={() => setIsAddOpen(false)}
+                  onClick={closeUserForm}
                   className="px-3 py-2 border border-slate-200 text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
                 >
                   Cancelar
@@ -378,7 +461,7 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                   type="submit"
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer transition-colors"
                 >
-                  Criar Usuário
+                  {editingUser ? 'Salvar Alterações' : 'Criar Usuário'}
                 </button>
               </div>
             </form>
@@ -388,7 +471,7 @@ export default function UsersPanel({ currentUser }: UsersProps) {
         {/* User List Table */}
         <div
           className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm ${
-            isAdmin && isAddOpen ? 'xl:col-span-2' : 'lg:col-span-3'
+            isAdmin && (isAddOpen || editingUser) ? 'xl:col-span-2' : 'lg:col-span-3'
           }`}
         >
           <div className="overflow-x-auto text-sm">
@@ -450,10 +533,10 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                       </td>
 
                       <td className="p-4">
-                        {usr.empresaId ? (
+                        {getAuthorizedEmpresaIds(usr).length > 0 ? (
                           <span className="text-slate-800 font-bold flex items-center gap-1">
                             <Building className="h-3 w-3 text-slate-400 shrink-0" />
-                            {obterNomeEmpresa(usr.empresaId, companyOptions)}
+                            {getAuthorizedEmpresaIds(usr).map((id) => obterNomeEmpresa(id, companyOptions)).join(', ')}
                           </span>
                         ) : (
                           <span className="text-slate-450 italic font-medium">
@@ -499,6 +582,14 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                       {isAdmin && (
                         <td className="p-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => openEditUser(usr)}
+                              className="p-1 px-1.5 bg-white hover:bg-emerald-50 text-slate-400 hover:text-emerald-600 border border-slate-200 rounded-md cursor-pointer transition-colors shadow-xs"
+                              title="Editar cadastro"
+                            >
+                              <Edit2 className="h-3.5 w-3.5" />
+                            </button>
+
                             <button
                               onClick={() => handleSendPasswordReset(usr)}
                               disabled={isSendingReset}

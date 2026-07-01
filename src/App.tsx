@@ -27,6 +27,7 @@ import UsersPanel from './components/Users';
 import { Usuario } from './types';
 import { dbInLocalStorage, isLocalOnly, toggleLocalMode } from './utils/mockdb';
 import { formatarNomeEmpresaId } from './utils/empresaUtils';
+import { getAuthorizedEmpresaIds, canAccessEmpresa } from './utils/accessControl';
 import { authClient } from './auth';
 
 export default function App() {
@@ -121,6 +122,15 @@ export default function App() {
 
   // Global Company Filter lens
   const [selectedEmpresaGlobal, setSelectedEmpresaGlobal] = useState<string>('');
+
+  const isAdmin = sessionUser?.perfil === 'Administrador';
+  const authorizedEmpresaIds = getAuthorizedEmpresaIds(sessionUser);
+
+  React.useEffect(() => {
+    if (sessionUser && selectedEmpresaGlobal && !canAccessEmpresa(sessionUser, selectedEmpresaGlobal)) {
+      setSelectedEmpresaGlobal('');
+    }
+  }, [sessionUser, selectedEmpresaGlobal]);
 
   // Logout handler
   const handleLogout = async () => {
@@ -334,8 +344,8 @@ export default function App() {
 
                 <span className="text-xs text-slate-500 block pt-0.5 font-semibold">
                   {sessionUser.perfil}{' '}
-                  {sessionUser.empresaId
-                    ? `• ${formatarNomeEmpresaId(sessionUser.empresaId)}`
+                  {authorizedEmpresaIds.length > 0
+                    ? `• ${authorizedEmpresaIds.map(formatarNomeEmpresaId).join(', ')}`
                     : ''}
                 </span>
               </div>
@@ -469,6 +479,8 @@ export default function App() {
             Relatórios e Auditorias
           </button>
 
+          {isAdmin && (
+            <>
           <div className="h-px bg-slate-100 my-2.5 mx-3" />
 
           <button
@@ -486,6 +498,8 @@ export default function App() {
             <Users className="h-4 w-4 shrink-0" />
             Usuários e Controle
           </button>
+            </>
+          )}
 
           {/* Quick Stats Sidebar footer card */}
           <div className="mt-auto hidden md:block p-4 border border-slate-200 bg-slate-50 rounded-xl space-y-2 shadow-xs">
@@ -523,6 +537,7 @@ export default function App() {
               >
                 {activeTab === 'dashboard' && (
                   <Dashboard
+                    currentUser={sessionUser}
                     onNavigateToVehicles={navigateToVehiclesWithPlate}
                     onNavigateToDocuments={navigateToDocumentsWithPlate}
                     selectedEmpresaGlobal={selectedEmpresaGlobal}
@@ -553,7 +568,7 @@ export default function App() {
                   />
                 )}
 
-                {activeTab === 'users' && (
+                {activeTab === 'users' && isAdmin && (
                   <UsersPanel currentUser={sessionUser} />
                 )}
               </motion.div>
