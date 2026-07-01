@@ -15,6 +15,8 @@ import {
   CheckCircle,
   Shield,
   Globe,
+  Moon,
+  Sun,
 } from 'lucide-react';
 
 import Login from './components/Login';
@@ -37,6 +39,23 @@ export default function App() {
   if (isResetPasswordPage) {
     return <ResetPassword />;
   }
+
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window === 'undefined') return false;
+
+    const storedTheme = window.localStorage.getItem('frota-theme');
+
+    if (storedTheme) {
+      return storedTheme === 'dark';
+    }
+
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  React.useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDarkMode);
+    window.localStorage.setItem('frota-theme', isDarkMode ? 'dark' : 'light');
+  }, [isDarkMode]);
 
   // Offline local mode fallback state
   const [isOfflineMode, setIsOfflineMode] = useState(() => isLocalOnly());
@@ -355,6 +374,19 @@ export default function App() {
                 </span>
               </div>
             </div>
+
+            <button
+              onClick={() => setIsDarkMode((current) => !current)}
+              title={isDarkMode ? 'Ativar modo claro' : 'Ativar modo escuro'}
+              aria-label={isDarkMode ? 'Ativar modo claro' : 'Ativar modo escuro'}
+              className="p-2 border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 hover:text-blue-600 rounded-lg transition-colors cursor-pointer shadow-xs"
+            >
+              {isDarkMode ? (
+                <Sun className="h-4.5 w-4.5" />
+              ) : (
+                <Moon className="h-4.5 w-4.5" />
+              )}
+            </button>
 
             {/* Logout dispatch */}
             <button
