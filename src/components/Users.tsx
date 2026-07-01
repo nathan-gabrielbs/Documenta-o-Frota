@@ -3,85 +3,106 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { 
-  Users, UserPlus, Shield, ToggleLeft, ToggleRight, 
-  Trash2, Mail, Lock, Building, Check, X, Edit2, AlertTriangle, Key
+import {
+  Users,
+  UserPlus,
+  Shield,
+  Trash2,
+  Building,
+  X,
+  AlertTriangle,
+  Key,
+  Mail,
 } from 'lucide-react';
 import { Usuario, PerfilAcesso, StatusUsuario } from '../types';
 import { dbInLocalStorage, PREDEFINED_COMPANIES } from '../utils/mockdb';
 import { EMPRESAS_PADRAO, obterNomeEmpresa } from '../utils/empresaUtils';
+import { authClient } from '../auth';
 
 interface UsersProps {
   currentUser: Usuario;
 }
 
+const AUTH_MANAGED_PASSWORD_PLACEHOLDER = 'NEON_AUTH_MANAGED';
+
 export default function UsersPanel({ currentUser }: UsersProps) {
-  
-  // Local list state
   const [users, setUsers] = useState<Usuario[]>(() => dbInLocalStorage.getUsers());
-  const companyOptions = PREDEFINED_COMPANIES.length > 0 ? PREDEFINED_COMPANIES : EMPRESAS_PADRAO;
+
+  const companyOptions =
+    PREDEFINED_COMPANIES.length > 0 ? PREDEFINED_COMPANIES : EMPRESAS_PADRAO;
+
+  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [deleteConfirmUser, setDeleteConfirmUser] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+
+  const [systemAlertMessage, setSystemAlertMessage] = useState<string | null>(null);
+  const [sendingResetForUserId, setSendingResetForUserId] = useState<string | null>(null);
+
+  // Form Fields
+  const [inputNome, setInputNome] = useState('');
+  const [inputEmail, setInputEmail] = useState('');
+  const [inputPerfil, setInputPerfil] = useState<PerfilAcesso>('Operacional');
+  const [inputEmpresa, setInputEmpresa] = useState<string>('');
+
+  const isAdmin = currentUser.perfil === 'Administrador';
 
   useEffect(() => {
     const handleUpdate = () => {
       setUsers(dbInLocalStorage.getUsers());
     };
+
     window.addEventListener('mockdb-update', handleUpdate);
-    return () => window.removeEventListener('mockdb-update', handleUpdate);
+
+    return () => {
+      window.removeEventListener('mockdb-update', handleUpdate);
+    };
   }, []);
-  const [isAddOpen, setIsAddOpen] = useState(false);
-  const [formError, setFormError] = useState('');
-  const [deleteConfirmUser, setDeleteConfirmUser] = useState<{ id: string, name: string } | null>(null);
-  const [systemAlertMessage, setSystemAlertMessage] = useState<string | null>(null);
 
-  // Form Fields
-  const [inputNome, setInputNome] = useState('');
-  const [inputEmail, setInputEmail] = useState('');
-  const [inputSenha, setInputSenha] = useState('');
-  const [inputPerfil, setInputPerfil] = useState<PerfilAcesso>('Operacional');
-  const [inputEmpresa, setInputEmpresa] = useState<string>(''); // empty means General
+  // Migração de segurança:
+  // remove senhas antigas salvas no localStorage e troca por um marcador sem valor real.
+  useEffect(() => {
+    const sanitizeStoredPasswords = async () => {
+      const localUsers = dbInLocalStorage.getUsers();
 
-  const [resetPasswordUser, setResetPasswordUser] = useState<Usuario | null>(null);
-  const [resetPasswordValue, setResetPasswordValue] = useState('123456');
+      const hasRealPasswordStored = localUsers.some(
+        (u) => u.senha && u.senha !== AUTH_MANAGED_PASSWORD_PLACEHOLDER
+      );
 
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!resetPasswordUser) return;
+      if (!hasRealPasswordStored) return;
 
-    if (resetPasswordValue.trim().length < 4) {
-      setFormError("A nova senha deve possuir pelo menos 4 caracteres.");
-      return;
-    }
+      const sanitized = localUsers.map((u) => ({
+        ...u,
+        senha: AUTH_MANAGED_PASSWORD_PLACEHOLDER,
+      }));
 
-    const updated = users.map(u => 
-      u.id === resetPasswordUser.id ? { ...u, senha: resetPasswordValue.trim() } : u
-    );
+      await dbInLocalStorage.saveUsers(sanitized);
+      setUsers(sanitized);
+    };
 
-    await dbInLocalStorage.saveUsers(updated);
-    setUsers(updated);
-    setResetPasswordUser(null);
-    setSystemAlertMessage(`A senha do usuário ${resetPasswordUser.nome} foi redefinida com sucesso para "${resetPasswordValue.trim()}"!`);
-  };
+    sanitizeStoredPasswords();
+  }, []);
 
-  const isAdmin = currentUser.perfil === 'Administrador';
-
-  // Save new user
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
 
-    if (!inputNome.trim() || !inputEmail.trim() || !inputSenha.trim()) {
-      setFormError('Preencha os campos obrigatórios (incluindo a senha).');
+    const cleanName = inputNome.trim();
+    const cleanEmail = inputEmail.trim().toLowerCase();
+
+    if (!cleanName || !cleanEmail) {
+      setFormError('Preencha os campos obrigatórios.');
       return;
     }
 
-    if (inputSenha.trim().length < 4) {
-      setFormError('A senha deve possuir pelo menos 4 caracteres.');
-      return;
-    }
+    const emailCheck = users.some(
+      (u) => u.email.toLowerCase() === cleanEmail
+    );
 
-    const emailCheck = users.some(u => u.email.toLowerCase() === inputEmail.trim().toLowerCase());
     if (emailCheck) {
       setFormError('Este e-mail de acesso já está cadastrado.');
       return;
@@ -89,40 +110,52 @@ export default function UsersPanel({ currentUser }: UsersProps) {
 
     const newUser: Usuario = {
       id: `usr-${Date.now()}`,
-      nome: inputNome.trim(),
-      email: inputEmail.trim().toLowerCase(),
+      nome: cleanName,
+      email: cleanEmail,
       perfil: inputPerfil,
       empresaId: inputEmpresa || null,
       status: 'ativo',
       dataCriacao: new Date().toISOString().split('T')[0],
       ultimoAcesso: 'Nunca logou',
-      senha: inputSenha.trim()
+
+      // Não armazenar senha real no sistema.
+      // A senha real é criada e gerenciada pelo Neon Auth.
+      senha: AUTH_MANAGED_PASSWORD_PLACEHOLDER,
     };
 
     const updated = [...users, newUser];
-    dbInLocalStorage.saveUsers(updated);
+
+    await dbInLocalStorage.saveUsers(updated);
     setUsers(updated);
     setIsAddOpen(false);
 
-    // Reset fields
     setInputNome('');
     setInputEmail('');
-    setInputSenha('');
     setInputPerfil('Operacional');
     setInputEmpresa('');
+
+    setSystemAlertMessage(
+      `Usuário ${cleanName} cadastrado com sucesso. A senha não é definida pelo painel administrativo. O usuário deve acessar a tela de login e usar "Primeiro acesso / Criar senha" para cadastrar a senha no Neon Auth.`
+    );
   };
 
-  // Toggle toggle user Active / Inactive states
   const toggleUserStatus = async (target: Usuario) => {
     if (target.id === currentUser.id) {
-      setSystemAlertMessage("Você não pode inativar seu próprio perfil atual.");
+      setSystemAlertMessage('Você não pode inativar seu próprio perfil atual.');
       return;
     }
 
-    const updated = users.map(u => {
+    const updated = users.map((u) => {
       if (u.id === target.id) {
-        return { ...u, status: u.status === 'ativo' ? 'inativo' as StatusUsuario : 'ativo' as StatusUsuario };
+        return {
+          ...u,
+          status:
+            u.status === 'ativo'
+              ? ('inativo' as StatusUsuario)
+              : ('ativo' as StatusUsuario),
+        };
       }
+
       return u;
     });
 
@@ -130,22 +163,57 @@ export default function UsersPanel({ currentUser }: UsersProps) {
     setUsers(updated);
   };
 
-  // Delete user
   const handleDeleteUser = async (id: string, name: string) => {
     if (id === currentUser.id) {
-      setSystemAlertMessage("Você não pode excluir seu próprio perfil atual.");
+      setSystemAlertMessage('Você não pode excluir seu próprio perfil atual.');
       return;
     }
 
-    const updated = users.filter(u => u.id !== id);
+    const updated = users.filter((u) => u.id !== id);
+
     await dbInLocalStorage.saveUsers(updated);
     setUsers(updated);
     setDeleteConfirmUser(null);
+
+    setSystemAlertMessage(
+      `O usuário ${name} foi removido do perfil interno do sistema. Caso ele também exista no Neon Auth, remova ou desative o acesso no painel do Neon Auth.`
+    );
+  };
+
+  const handleSendPasswordReset = async (target: Usuario) => {
+    setSendingResetForUserId(target.id);
+    setSystemAlertMessage(null);
+
+    try {
+      const result = await authClient.requestPasswordReset({
+        email: target.email.trim().toLowerCase(),
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+
+      if (result.error) {
+        setSystemAlertMessage(
+          result.error.message ||
+            `Não foi possível enviar o link de redefinição para ${target.email}.`
+        );
+        return;
+      }
+
+      setSystemAlertMessage(
+        `Link de redefinição de senha enviado para ${target.email}. Por segurança, a senha não é exibida nem alterada pelo administrador.`
+      );
+    } catch (err) {
+      console.error('Erro ao enviar reset de senha:', err);
+
+      setSystemAlertMessage(
+        `Erro ao enviar o link de redefinição para ${target.email}. Verifique se o usuário existe no Neon Auth.`
+      );
+    } finally {
+      setSendingResetForUserId(null);
+    }
   };
 
   return (
     <div className="space-y-6">
-      
       {/* Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-slate-200 pb-5">
         <div>
@@ -153,8 +221,9 @@ export default function UsersPanel({ currentUser }: UsersProps) {
             <Users className="text-blue-600 h-6 w-6" />
             Configuração de Usuários do Sistema
           </h1>
+
           <p className="text-sm text-slate-500">
-            Crie novos logins, configure perfis de acesso restritivos por empresa e modifique status.
+            Crie perfis internos, configure permissões por empresa e controle o status de acesso.
           </p>
         </div>
 
@@ -169,19 +238,33 @@ export default function UsersPanel({ currentUser }: UsersProps) {
         )}
       </div>
 
+      <div className="p-4 rounded-xl bg-blue-50 border border-blue-200 text-blue-800 text-xs flex gap-2 font-medium">
+        <Shield className="h-5 w-5 shrink-0 text-blue-600" />
+        <div>
+          <strong className="block mb-0.5 text-blue-900 font-bold">
+            Segurança de credenciais
+          </strong>
+          As senhas são gerenciadas pelo Neon Auth.
+        </div>
+      </div>
+
       {!isAdmin && (
         <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs flex gap-2 font-medium">
           <Shield className="h-5 w-5 shrink-0 text-amber-600" />
+
           <div>
-            <strong className="block mb-0.5 text-amber-900 font-bold">Permissão Administrativa Exigida</strong>
-            Seu nível de perfil atual é <strong>{currentUser.perfil}</strong>. Apenas usuários com o perfil <strong>Administrador</strong> estão autorizados a alterar ou cadastrar novos integrantes.
+            <strong className="block mb-0.5 text-amber-900 font-bold">
+              Permissão Administrativa Exigida
+            </strong>
+            Seu nível de perfil atual é <strong>{currentUser.perfil}</strong>.
+            Apenas usuários com o perfil <strong>Administrador</strong> estão
+            autorizados a alterar ou cadastrar novos integrantes.
           </div>
         </div>
       )}
 
       {/* Grid wrapper for add form + list */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-        
         {/* Left Col: Add Form */}
         {isAdmin && isAddOpen && (
           <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
@@ -189,7 +272,8 @@ export default function UsersPanel({ currentUser }: UsersProps) {
               <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                 Novo Integrante
               </h3>
-              <button 
+
+              <button
                 onClick={() => setIsAddOpen(false)}
                 className="text-slate-400 hover:text-slate-600 cursor-pointer p-0.5"
               >
@@ -208,6 +292,7 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                 <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                   Nome Completo *
                 </label>
+
                 <input
                   id="add-username-input"
                   type="text"
@@ -223,6 +308,7 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                 <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                   E-mail de Login *
                 </label>
+
                 <input
                   id="add-useremail-input"
                   type="email"
@@ -234,25 +320,17 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                 />
               </div>
 
-              <div>
-                <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
-                  Senha de Acesso *
-                </label>
-                <input
-                  id="add-userpassword-input"
-                  type="password"
-                  required
-                  placeholder="Defina uma senha (mín. 4 digitos)..."
-                  value={inputSenha}
-                  onChange={(e) => setInputSenha(e.target.value)}
-                  className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all font-medium"
-                />
+              <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 text-slate-600 text-xs leading-relaxed">
+                A senha não é cadastrada nesta tela. Após criar o perfil, o
+                usuário deve acessar o login e clicar em{' '}
+                <strong>Primeiro acesso / Criar senha</strong>.
               </div>
 
               <div>
                 <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                   Perfil de Acesso *
                 </label>
+
                 <select
                   id="add-userprofile-select"
                   value={inputPerfil}
@@ -270,6 +348,7 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                 <label className="block text-slate-500 mb-1 font-semibold uppercase tracking-wider text-xs">
                   Limitar à Empresa (Opcional)
                 </label>
+
                 <select
                   id="add-usercompany-select"
                   value={inputEmpresa}
@@ -277,8 +356,11 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                   className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
                 >
                   <option value="">Acesso Geral (Todas Empresas)</option>
-                  {companyOptions.map(c => (
-                    <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companyOptions)}</option>
+
+                  {companyOptions.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {obterNomeEmpresa(c.id, companyOptions)}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -291,11 +373,12 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                 >
                   Cancelar
                 </button>
+
                 <button
                   type="submit"
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer transition-colors"
                 >
-                  Criar Login
+                  Criar Usuário
                 </button>
               </div>
             </form>
@@ -303,9 +386,11 @@ export default function UsersPanel({ currentUser }: UsersProps) {
         )}
 
         {/* User List Table */}
-        <div className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm ${
-          isAdmin && isAddOpen ? 'xl:col-span-2' : 'lg:col-span-3'
-        }`}>
+        <div
+          className={`bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm ${
+            isAdmin && isAddOpen ? 'xl:col-span-2' : 'lg:col-span-3'
+          }`}
+        >
           <div className="overflow-x-auto text-sm">
             <table className="w-full text-left border-collapse">
               <thead>
@@ -318,30 +403,48 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                   {isAdmin && <th className="p-4 text-right">Ações</th>}
                 </tr>
               </thead>
+
               <tbody className="divide-y divide-slate-100">
                 {users.map((usr) => {
                   const isActive = usr.status === 'ativo';
                   const isCurrent = usr.id === currentUser.id;
+                  const isSendingReset = sendingResetForUserId === usr.id;
 
                   return (
-                    <tr key={usr.id} className="hover:bg-slate-50/50 transition-colors">
+                    <tr
+                      key={usr.id}
+                      className="hover:bg-slate-50/50 transition-colors"
+                    >
                       <td className="p-4">
                         <div className="space-y-0.5">
                           <span className="font-bold text-slate-900 text-sm block">
-                            {usr.nome} {isCurrent && <strong className="text-blue-600 text-xs font-bold select-none ml-1">(Você)</strong>}
+                            {usr.nome}{' '}
+                            {isCurrent && (
+                              <strong className="text-blue-600 text-xs font-bold select-none ml-1">
+                                (Você)
+                              </strong>
+                            )}
                           </span>
+
                           <span className="text-xs text-slate-500 block font-mono">
-                            {usr.email} {isAdmin && <span className="text-slate-400 font-sans ml-1.5 text-xs font-medium select-all">(Senha: {usr.senha || '123456'})</span>}
+                            {usr.email}
                           </span>
+
                         </div>
                       </td>
 
                       <td className="p-4">
-                        <span className={`px-2 py-0.5 rounded text-xs font-bold border ${
-                          usr.perfil === 'Administrador' ? 'text-blue-700 bg-blue-50 border-blue-200' :
-                          usr.perfil === 'Gestor' ? 'text-purple-700 bg-purple-50 border-purple-200' :
-                          usr.perfil === 'Operacional' ? 'text-amber-700 bg-amber-50 border-amber-200' : 'text-slate-600 bg-slate-100 border-slate-200'
-                        }`}>
+                        <span
+                          className={`px-2 py-0.5 rounded text-xs font-bold border ${
+                            usr.perfil === 'Administrador'
+                              ? 'text-blue-700 bg-blue-50 border-blue-200'
+                              : usr.perfil === 'Gestor'
+                                ? 'text-purple-700 bg-purple-50 border-purple-200'
+                                : usr.perfil === 'Operacional'
+                                  ? 'text-amber-700 bg-amber-50 border-amber-200'
+                                  : 'text-slate-600 bg-slate-100 border-slate-200'
+                          }`}
+                        >
                           {usr.perfil}
                         </span>
                       </td>
@@ -353,14 +456,25 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                             {obterNomeEmpresa(usr.empresaId, companyOptions)}
                           </span>
                         ) : (
-                          <span className="text-slate-450 italic font-medium">Geral (Toda a Frota)</span>
+                          <span className="text-slate-450 italic font-medium">
+                            Geral (Toda a Frota)
+                          </span>
                         )}
                       </td>
 
                       <td className="p-4 text-slate-500 text-sm font-medium">
-                        <span className="block text-slate-700">Cadastrado: {usr.dataCriacao}</span>
-                        <span className="text-xs text-slate-400 block truncate max-w-[150px]" title={usr.ultimoAcesso}>
-                          Alt: {usr.ultimoAcesso !== 'Nunca logou' ? new Date(usr.ultimoAcesso).toLocaleString('pt-BR') : 'Nunca logou'}
+                        <span className="block text-slate-700">
+                          Cadastrado: {usr.dataCriacao}
+                        </span>
+
+                        <span
+                          className="text-xs text-slate-400 block truncate max-w-[150px]"
+                          title={usr.ultimoAcesso}
+                        >
+                          Alt:{' '}
+                          {usr.ultimoAcesso !== 'Nunca logou'
+                            ? new Date(usr.ultimoAcesso).toLocaleString('pt-BR')
+                            : 'Nunca logou'}
                         </span>
                       </td>
 
@@ -369,10 +483,14 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                           disabled={!isAdmin || isCurrent}
                           onClick={() => toggleUserStatus(usr)}
                           className={`inline-flex items-center gap-1 text-xs font-bold px-2.5 py-0.5 rounded-full border shadow-xs select-none ${
-                            isActive 
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-250 hover:bg-emerald-100' 
+                            isActive
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-250 hover:bg-emerald-100'
                               : 'bg-slate-100 text-slate-500 border-slate-200 hover:bg-slate-200'
-                          } ${isAdmin && !isCurrent ? 'cursor-pointer' : 'cursor-default'}`}
+                          } ${
+                            isAdmin && !isCurrent
+                              ? 'cursor-pointer'
+                              : 'cursor-default'
+                          }`}
                         >
                           {isActive ? 'Ativo' : 'Inativo'}
                         </button>
@@ -382,19 +500,26 @@ export default function UsersPanel({ currentUser }: UsersProps) {
                         <td className="p-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">
                             <button
-                              onClick={() => {
-                                setResetPasswordUser(usr);
-                                setResetPasswordValue('123456');
-                              }}
-                              className="p-1 px-1.5 bg-white hover:bg-blue-50 text-slate-400 hover:text-blue-600 border border-slate-200 rounded-md cursor-pointer transition-colors shadow-xs"
-                              title="Redefinir Senha de Acesso"
+                              onClick={() => handleSendPasswordReset(usr)}
+                              disabled={isSendingReset}
+                              className="p-1 px-1.5 bg-white hover:bg-blue-50 text-slate-400 hover:text-blue-600 border border-slate-200 rounded-md cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-colors shadow-xs"
+                              title="Enviar link de redefinição de senha"
                             >
-                              <Key className="h-3.5 w-3.5" />
+                              {isSendingReset ? (
+                                <Mail className="h-3.5 w-3.5 animate-pulse" />
+                              ) : (
+                                <Key className="h-3.5 w-3.5" />
+                              )}
                             </button>
 
                             <button
                               disabled={isCurrent}
-                              onClick={() => setDeleteConfirmUser({ id: usr.id, name: usr.nome })}
+                              onClick={() =>
+                                setDeleteConfirmUser({
+                                  id: usr.id,
+                                  name: usr.nome,
+                                })
+                              }
                               className="p-1 px-1.5 bg-white hover:bg-rose-50 text-slate-400 hover:text-rose-600 border border-slate-200 rounded-md cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed transition-colors shadow-xs"
                               title="Excluir Usuário"
                             >
@@ -410,12 +535,14 @@ export default function UsersPanel({ currentUser }: UsersProps) {
             </table>
           </div>
         </div>
-
       </div>
 
       {/* Delete Confirmation Modal */}
       {deleteConfirmUser && (
-        <div id="delete-user-confirm-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div
+          id="delete-user-confirm-modal"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        >
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -425,13 +552,18 @@ export default function UsersPanel({ currentUser }: UsersProps) {
               <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">
                 <Trash2 className="h-5 w-5" />
               </div>
+
               <h3 className="text-sm font-bold uppercase text-rose-600 tracking-wider">
                 Excluir usuário permanentemente?
               </h3>
             </div>
-            
+
             <p className="text-slate-600 mb-6 text-sm leading-relaxed">
-              Gostaria de remover permanentemente o usuário <strong className="text-slate-900 font-bold">{deleteConfirmUser.name}</strong> do sistema? Esta ação removerá sua permissão de login.
+              Gostaria de remover permanentemente o usuário{' '}
+              <strong className="text-slate-900 font-bold">
+                {deleteConfirmUser.name}
+              </strong>{' '}
+              do sistema? Esta ação removerá seu perfil interno de acesso.
             </p>
 
             <div className="flex justify-end gap-4 pt-2">
@@ -441,8 +573,11 @@ export default function UsersPanel({ currentUser }: UsersProps) {
               >
                 Cancelar
               </button>
+
               <button
-                onClick={() => handleDeleteUser(deleteConfirmUser.id, deleteConfirmUser.name)}
+                onClick={() =>
+                  handleDeleteUser(deleteConfirmUser.id, deleteConfirmUser.name)
+                }
                 className="px-4 py-2 bg-rose-650 hover:bg-rose-700 text-white font-bold rounded-xl border border-rose-700 shadow-xs cursor-pointer transition-colors"
               >
                 Confirmar Exclusão
@@ -454,7 +589,10 @@ export default function UsersPanel({ currentUser }: UsersProps) {
 
       {/* Custom System Alert Modal */}
       {systemAlertMessage && (
-        <div id="user-alert-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div
+          id="user-alert-modal"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        >
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -463,8 +601,13 @@ export default function UsersPanel({ currentUser }: UsersProps) {
             <div className="mx-auto w-12 h-12 flex items-center justify-center text-amber-500 bg-amber-50 rounded-full mb-3">
               <AlertTriangle className="h-6 w-6" />
             </div>
+
             <h4 className="text-sm font-bold text-slate-900 mb-2">Atenção</h4>
-            <p className="text-slate-600 mb-5 leading-relaxed">{systemAlertMessage}</p>
+
+            <p className="text-slate-600 mb-5 leading-relaxed">
+              {systemAlertMessage}
+            </p>
+
             <button
               onClick={() => setSystemAlertMessage(null)}
               className="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl transition-colors cursor-pointer"
@@ -474,62 +617,6 @@ export default function UsersPanel({ currentUser }: UsersProps) {
           </motion.div>
         </div>
       )}
-
-      {/* Reset Password Modal */}
-      {resetPasswordUser && (
-        <div id="reset-user-password-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <motion.form 
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            onSubmit={handleResetPassword} 
-            className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 font-sans text-xs"
-          >
-            <div className="flex items-center gap-4 border-b border-slate-100 pb-3 mb-4">
-              <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                <Key className="h-5 w-5" />
-              </div>
-              <h3 className="text-sm font-bold uppercase text-slate-800 tracking-wider">
-                Redefinir Senha do Usuário
-              </h3>
-            </div>
-            
-            <p className="text-slate-600 mb-4 text-xs leading-relaxed">
-              Você está redefinindo a credencial de acesso do usuário <strong className="text-slate-950 font-bold">{resetPasswordUser.nome}</strong> ({resetPasswordUser.email}).
-            </p>
-
-            <div className="mb-6">
-              <label className="block text-slate-500 mb-1.5 font-semibold uppercase tracking-wider text-xs">
-                Nova Senha (preenchida com o padrão '123456')
-              </label>
-              <input
-                id="reset-password-input"
-                type="text"
-                required
-                value={resetPasswordValue}
-                onChange={(e) => setResetPasswordValue(e.target.value)}
-                className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-850 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all font-mono text-sm font-medium"
-              />
-            </div>
-
-            <div className="flex justify-end gap-4 pt-2">
-              <button
-                type="button"
-                onClick={() => setResetPasswordUser(null)}
-                className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 font-bold rounded-xl border border-slate-200 shadow-xs cursor-pointer transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl border border-blue-700 shadow-xs cursor-pointer transition-colors"
-              >
-                Confirmar Redefinição
-              </button>
-            </div>
-          </motion.form>
-        </div>
-      )}
-
     </div>
   );
 }
