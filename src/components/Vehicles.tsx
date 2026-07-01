@@ -848,92 +848,233 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     return audits.filter(a => a.placa === selectedVehicle.placa);
   }, [selectedVehicle, audits]);
 
+  const vehicleOverviewMetrics = useMemo(() => {
+    const total = filteredVehicles.length;
+    const ativos = filteredVehicles.filter(v => v.status === 'ativo').length;
+    const comCrlv = filteredVehicles.filter(vehicleHasCrlv).length;
+    const conjuntos = filteredVehicles.filter(v =>
+      Boolean(v.carretaVinculadaId || v.carreta2VinculadaId || v.cavaloVinculadoId)
+    ).length;
+    const complianceValues = filteredVehicles.map(v => getVehicleCompliance(v.id));
+    const mediaConformidade = total > 0
+      ? Math.round(complianceValues.reduce((sum, value) => sum + value, 0) / total)
+      : 100;
+
+    return {
+      total,
+      ativos,
+      comCrlv,
+      conjuntos,
+      mediaConformidade,
+    };
+  }, [filteredVehicles, vehicles, documents]);
+
   return (
     <div className="space-y-6">
 
-      {/* Title block */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-slate-200 pb-5">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-1 flex items-center gap-2">
-            <Truck className="text-blue-600 h-6 w-6" />
-            Cadastro de Veículos da Frota
-          </h1>
-          <p className="text-sm text-slate-500 font-sans">
-            Cadastre todos os veículos da frota, gerencie documentos obrigatórios e acompanhe a conformidade de cada unidade.
-          </p>
+      {/* Corporate Hero */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+        className="relative overflow-hidden rounded-3xl border border-blue-100 bg-[radial-gradient(circle_at_top_left,_rgba(37,99,235,0.16),_transparent_34%),linear-gradient(135deg,#ffffff_0%,#f8fafc_48%,#eef6ff_100%)] shadow-sm"
+      >
+        <div className="absolute -right-16 -top-20 h-56 w-56 rounded-full bg-blue-600/10 blur-2xl" />
+        <div className="absolute -left-16 bottom-0 h-44 w-44 rounded-full bg-amber-400/20 blur-2xl" />
+
+        <div className="relative grid grid-cols-1 xl:grid-cols-[1.25fr_0.75fr] gap-6 p-6 lg:p-7">
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div>
+                <span className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.22em] text-blue-700">
+                  <Activity className="h-3.5 w-3.5" />
+                  Gestão de Frota
+                </span>
+
+                <h1 className="mt-3 text-3xl lg:text-4xl font-black tracking-tight text-slate-950">
+                  Cadastro de Veículos da Frota
+                </h1>
+
+                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600 font-medium">
+                  Controle corporativo das unidades do Grupo Potencial com visão por empresa, base operacional, CRLV, composição cavalo/carreta e conformidade documental.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 text-xs font-bold">
+              <span className="rounded-full border border-blue-100 bg-white/80 px-3 py-1.5 text-blue-700 shadow-xs">
+                {selectedEmpresaGlobal ? obterNomeEmpresa(selectedEmpresaGlobal, companyOptions) : 'Todas as empresas'}
+              </span>
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-700 shadow-xs">
+                Operação integrada
+              </span>
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-700 shadow-xs">
+                Segurança documental
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-col justify-between gap-4 rounded-2xl border border-white/70 bg-white/80 p-5 shadow-sm backdrop-blur">
+            <div>
+              <span className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-slate-400">
+                Painel operacional
+              </span>
+              <p className="mt-2 text-sm text-slate-600 font-medium leading-relaxed">
+                Acompanhe rapidamente a frota filtrada e acesse o cadastro de novas unidades mantendo o padrão visual do Grupo Potencial.
+              </p>
+            </div>
+
+            {canWrite && (
+              <button
+                id="register-vehicle-btn"
+                onClick={() => setIsCreateModalOpen(true)}
+                className="group inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-700 px-5 py-3 text-xs font-extrabold uppercase tracking-wider text-white shadow-sm transition-all hover:bg-blue-800 active:scale-[0.98]"
+              >
+                <Plus className="h-4 w-4 transition-transform group-hover:rotate-90" />
+                Cadastrar Novo Veículo
+              </button>
+            )}
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Corporate KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-400">Unidades no filtro</span>
+            <div className="rounded-xl bg-blue-50 p-2 text-blue-700">
+              <Truck className="h-4 w-4" />
+            </div>
+          </div>
+          <p className="mt-3 text-3xl font-black text-slate-950">{vehicleOverviewMetrics.total}</p>
+          <p className="mt-1 text-xs font-medium text-slate-500">Placas cadastradas conforme filtros atuais.</p>
         </div>
 
-        {canWrite && (
-          <button
-            id="register-vehicle-btn"
-            onClick={() => setIsCreateModalOpen(true)}
-            className="flex items-center gap-2 py-2 px-4.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-xs cursor-pointer shadow-sm select-none transition-all active:scale-[0.98]"
-          >
-            <Plus className="h-4 w-4" />
-            Cadastrar Novo Veículo
-          </button>
-        )}
+        <div className="rounded-2xl border border-emerald-100 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-400">Ativas</span>
+            <div className="rounded-xl bg-emerald-50 p-2 text-emerald-700">
+              <CheckCircle2 className="h-4 w-4" />
+            </div>
+          </div>
+          <p className="mt-3 text-3xl font-black text-slate-950">{vehicleOverviewMetrics.ativos}</p>
+          <p className="mt-1 text-xs font-medium text-slate-500">Unidades operacionais disponíveis.</p>
+        </div>
+
+        <div className="rounded-2xl border border-amber-100 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-400">CRLV anexado</span>
+            <div className="rounded-xl bg-amber-50 p-2 text-amber-700">
+              <FileCheck className="h-4 w-4" />
+            </div>
+          </div>
+          <p className="mt-3 text-3xl font-black text-slate-950">{vehicleOverviewMetrics.comCrlv}</p>
+          <p className="mt-1 text-xs font-medium text-slate-500">Veículos com documento salvo no cadastro.</p>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-slate-400">Conformidade média</span>
+            <div className="rounded-xl bg-slate-100 p-2 text-slate-700">
+              <ClipboardList className="h-4 w-4" />
+            </div>
+          </div>
+          <p className="mt-3 text-3xl font-black text-slate-950">{vehicleOverviewMetrics.mediaConformidade}%</p>
+          <p className="mt-1 text-xs font-medium text-slate-500">{vehicleOverviewMetrics.conjuntos} unidades vinculadas em composição.</p>
+        </div>
       </div>
 
       {/* Advanced Filters */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col md:flex-row gap-4 shadow-sm">
-        <div className="flex-1 relative">
-          <input
-            id="search-vehicle-input"
-            type="text"
-            placeholder="Pesquisar por placa ou modelo..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full bg-white border border-slate-200 px-3 py-2 pl-9 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm"
-          />
-          <Search className="absolute left-3 top-3 h-3.5 w-3.5 text-slate-400" />
+      <div className="rounded-2xl border border-blue-100 bg-white/95 p-5 shadow-sm">
+        <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-sm font-black uppercase tracking-[0.18em] text-slate-900">
+              Consulta de Ativos
+            </h2>
+            <p className="text-xs font-medium text-slate-500">
+              Filtre por placa, modelo, empresa ou tipo de unidade.
+            </p>
+          </div>
+          <span className="text-xs font-bold text-blue-700">
+            {filteredVehicles.length} resultado(s)
+          </span>
         </div>
 
-        {!selectedEmpresaGlobal && (
-          <div className="w-full md:w-48">
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1 relative">
+            <input
+              id="search-vehicle-input"
+              type="text"
+              placeholder="Pesquisar por placa ou modelo..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 pl-10 text-sm font-medium text-slate-800 shadow-xs transition-all placeholder:text-slate-400 focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10"
+            />
+            <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-blue-600" />
+          </div>
+
+          {!selectedEmpresaGlobal && (
+            <div className="w-full md:w-60">
+              <select
+                id="filter-company-select"
+                value={companyFilter}
+                onChange={(e) => setCompanyFilter(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 shadow-xs transition-all focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 cursor-pointer"
+              >
+                <option value="">Todas empresas</option>
+                {companyOptions.filter(c => canAccessEmpresa(currentUser, c.id)).map(c => (
+                  <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companyOptions)}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="w-full md:w-60">
             <select
-              id="filter-company-select"
-              value={companyFilter}
-              onChange={(e) => setCompanyFilter(e.target.value)}
-              className="w-full bg-white border border-slate-200 px-3 py-2 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
+              id="filter-type-select"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 shadow-xs transition-all focus:border-blue-600 focus:bg-white focus:outline-none focus:ring-4 focus:ring-blue-500/10 cursor-pointer"
             >
-              <option value="">Todas empresas</option>
-              {companyOptions.filter(c => canAccessEmpresa(currentUser, c.id)).map(c => (
-                <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companyOptions)}</option>
-              ))}
+              <option value="">Todos tipos de unidade</option>
+              <option value="Cavalo">Cavalo</option>
+              <option value="Carreta">Carreta</option>
+              <option value="Porta Container">Porta Container</option>
+              <option value="Truck">Truck</option>
+              <option value="Bitruck">Bitruck</option>
+              <option value="Baú">Baú</option>
             </select>
           </div>
-        )}
-
-        <div className="w-full md:w-48">
-          <select
-            id="filter-type-select"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="w-full bg-white border border-slate-200 px-3 py-2 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
-          >
-            <option value="">Todos tipos de unidade</option>
-            <option value="Cavalo">Cavalo</option>
-            <option value="Carreta">Carreta</option>
-            <option value="Porta Container">Porta Container</option>
-            <option value="Truck">Truck</option>
-            <option value="Bitruck">Bitruck</option>
-            <option value="Baú">Baú</option>
-          </select>
         </div>
       </div>
 
       {/* Main Vehicles Table */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+      <div className="overflow-hidden rounded-3xl border border-blue-100 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-slate-100 bg-gradient-to-r from-blue-950 via-blue-900 to-blue-800 px-5 py-4 text-white sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-sm font-black uppercase tracking-[0.2em]">
+              Relação de Veículos
+            </h3>
+            <p className="mt-1 text-xs font-medium text-blue-100">
+              Clique em uma linha para abrir a ficha completa da unidade.
+            </p>
+          </div>
+          <span className="inline-flex w-fit items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-bold">
+            <Truck className="h-3.5 w-3.5" />
+            {filteredVehicles.length} unidade(s)
+          </span>
+        </div>
+
         {filteredVehicles.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 text-sm">
+          <div className="py-14 text-center text-sm font-medium text-slate-400">
             Nenhum veículo encontrado com os filtros atuais.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm border-collapse">
               <thead>
-                <tr className="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold tracking-wider text-xs uppercase">
+                <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
                   <th className="p-4">Placa / Empresa</th>
                   <th className="p-4">Tipo</th>
                   <th className="p-4">Modelo / Ano</th>
@@ -943,12 +1084,9 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                   <th className="p-4 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {filteredVehicles.map((veh) => {
                   const compValue = getVehicleCompliance(veh.id);
-                  const isHorse = veh.tipoUnidade === 'Cavalo';
-                  const isTrailer = veh.tipoUnidade === 'Carreta' || veh.tipoUnidade === 'Porta Container';
-
                   // counterpart plate lookup
                   const linkedRefObjs = veh.tipoUnidade === 'Cavalo'
                     ? getHorseTrailerIds(veh).map(id => vehicles.find(v => v.id === id)).filter(Boolean) as Veiculo[]
@@ -959,17 +1097,17 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                   return (
                     <tr
                       key={veh.id}
-                      className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                      className="group cursor-pointer transition-all hover:bg-blue-50/40"
                       onClick={() => setSelectedVehicle(veh)}
                     >
                       <td className="p-4">
                         <div className="space-y-0.5">
                           <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="font-mono font-bold text-xs text-slate-800 bg-slate-100 px-2 py-1 border border-slate-200 rounded group-hover:border-blue-300 transition-colors shadow-xs">
+                            <span className="font-mono font-black text-xs tracking-wider text-blue-950 bg-blue-50 px-2.5 py-1.5 border border-blue-100 rounded-lg group-hover:border-blue-300 group-hover:bg-white transition-colors shadow-xs">
                               {veh.placa}
                             </span>
                             {getVehicleBaseLabel(veh) && (
-                              <span className="px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 text-[11px] font-bold shadow-xs" title="Base operacional">
+                              <span className="px-2 py-1 rounded-lg border border-blue-200 bg-white text-blue-700 text-[11px] font-black shadow-xs" title="Base operacional">
                                 {getVehicleBaseLabel(veh)}
                               </span>
                             )}
@@ -980,14 +1118,14 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                                   e.stopPropagation();
                                   downloadVehicleCrlv(veh);
                                 }}
-                                className="px-2 py-1 rounded border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[11px] font-bold shadow-xs cursor-pointer transition-colors"
+                                className="px-2 py-1 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[11px] font-black shadow-xs cursor-pointer transition-colors"
                                 title={`Baixar CRLV da placa ${veh.placa}`}
                               >
                                 CRLV
                               </button>
                             )}
                           </div>
-                          <span className="text-xs text-slate-500 block pt-1 font-medium select-none">
+                          <span className="text-xs text-slate-500 block pt-1.5 font-semibold select-none">
                             {obterNomeEmpresa(veh.empresaId, companyOptions)}
                           </span>
                           {veh.arrendado && (
@@ -999,24 +1137,24 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                       </td>
 
                       <td className="p-4">
-                        <span className="font-semibold text-slate-700">
+                        <span className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-black uppercase tracking-wide text-slate-700">
                           {veh.tipoUnidade}
                         </span>
                       </td>
 
                       <td className="p-4">
                         <div className="space-y-0.5 text-slate-600">
-                          <p className="font-medium truncate max-w-[170px] text-slate-900">{veh.modelo}</p>
+                          <p className="font-bold truncate max-w-[170px] text-slate-900">{veh.modelo}</p>
                           <p className="text-xs text-slate-400">Ano: {veh.ano}</p>
                         </div>
                       </td>
 
                       <td className="p-4 text-center">
-                        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-50 rounded-full border border-slate-200 shadow-xs">
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white rounded-full border border-slate-200 shadow-xs">
                           <span className={`w-2 h-2 rounded-full ${compValue >= 90 ? 'bg-emerald-500' :
                             compValue >= 70 ? 'bg-amber-500' : 'bg-rose-500'
                             }`} />
-                          <span className="font-bold text-slate-700 text-sm">{compValue}%</span>
+                          <span className="font-black text-slate-800 text-sm">{compValue}%</span>
                         </div>
                       </td>
 
@@ -1025,13 +1163,13 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                           <div className="flex flex-wrap items-center gap-2">
                             {linkedRefObjs.map((linkedRefObj) => (
                               <div key={linkedRefObj.id} className="flex items-center gap-1">
-                                <span className="p-1 px-1.5 text-xs font-mono border border-slate-200 bg-slate-50 rounded text-slate-700 font-bold shadow-xs">
+                                <span className="p-1 px-2 text-xs font-mono border border-blue-100 bg-blue-50 rounded-lg text-blue-900 font-black shadow-xs">
                                   {linkedRefObj.placa}
                                 </span>
                                 <button
                                   onClick={() => handleDecoupleUnits(veh.id, linkedRefObj.id)}
                                   title="Desvincular composição"
-                                  className="p-1 bg-slate-100 text-slate-500 hover:text-rose-600 rounded cursor-pointer hover:bg-slate-200 transition-colors"
+                                  className="p-1 bg-white text-slate-500 hover:text-rose-600 rounded-lg border border-slate-200 cursor-pointer hover:bg-rose-50 transition-colors"
                                 >
                                   <Unlink className="h-3 w-3" />
                                 </button>
@@ -1039,7 +1177,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                             ))}
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-400 italic font-sans select-none">
+                          <span className="text-xs text-slate-400 italic font-sans font-medium select-none">
                             Individual / Sem Vínculo
                           </span>
                         )}
@@ -1060,7 +1198,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                           <button
                             onClick={() => setSelectedVehicle(veh)}
                             title="Ver Ficha Detalhada"
-                            className="p-1.5 bg-slate-50 hover:bg-blue-50 text-slate-500 hover:text-blue-600 border border-slate-200/60 rounded-md cursor-pointer transition-colors"
+                            className="p-2 bg-white hover:bg-blue-50 text-slate-500 hover:text-blue-700 border border-slate-200 rounded-lg cursor-pointer transition-colors shadow-xs"
                           >
                             <Eye className="h-3.5 w-3.5" />
                           </button>
@@ -1069,7 +1207,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                             <button
                               onClick={() => openEditModal(veh)}
                               title="Editar Veículo"
-                              className="p-1.5 bg-slate-50 hover:bg-amber-50 text-slate-500 hover:text-amber-600 border border-slate-200/60 rounded-md cursor-pointer transition-colors"
+                              className="p-2 bg-white hover:bg-amber-50 text-slate-500 hover:text-amber-700 border border-slate-200 rounded-lg cursor-pointer transition-colors shadow-xs"
                             >
                               <Edit2 className="h-3.5 w-3.5" />
                             </button>
@@ -1079,7 +1217,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                             <button
                               onClick={() => setDeleteConfirmVehicle(veh)}
                               title="Excluir Ativo"
-                              className="p-1.5 bg-slate-50 hover:bg-rose-50 text-slate-500 hover:text-rose-600 border border-slate-200/60 rounded-md cursor-pointer transition-colors"
+                              className="p-2 bg-white hover:bg-rose-50 text-slate-500 hover:text-rose-700 border border-slate-200 rounded-lg cursor-pointer transition-colors shadow-xs"
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </button>
@@ -1097,14 +1235,14 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
       {/* MODAL 1: Create Vehicle */}
       {isCreateModalOpen && (
-        <div id="create-vehicle-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
+        <div id="create-vehicle-modal" className="fixed inset-0 bg-blue-950/70 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-xl bg-white border border-slate-200 rounded-2xl shadow-2xl p-6"
+            className="w-full max-w-xl bg-white border border-blue-100 rounded-3xl shadow-2xl p-6"
           >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-              <h3 className="text-sm font-bold uppercase text-blue-600 tracking-wider">
+            <div className="flex items-center justify-between border-b border-blue-100 pb-3 mb-4">
+              <h3 className="text-sm font-black uppercase text-blue-700 tracking-[0.18em]">
                 Novo Cadastro de Veículo
               </h3>
               <button
@@ -1326,13 +1464,13 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 <button
                   type="button"
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                  className="px-5 py-2.5 border border-slate-200 text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-50 rounded-xl cursor-pointer transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer transition-colors shadow-xs"
+                  className="px-5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl cursor-pointer transition-colors shadow-xs font-bold"
                 >
                   Confirmar Cadastro
                 </button>
@@ -1344,13 +1482,13 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
       {/* MODAL 2: Edit Vehicle */}
       {isEditModalOpen && editingVehicle && (
-        <div id="edit-vehicle-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
+        <div id="edit-vehicle-modal" className="fixed inset-0 bg-blue-950/70 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-xl bg-white border border-slate-200 rounded-2xl shadow-2xl p-6"
+            className="w-full max-w-xl bg-white border border-blue-100 rounded-3xl shadow-2xl p-6"
           >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <div className="flex items-center justify-between border-b border-blue-100 pb-3 mb-4">
               <h3 className="text-sm font-bold uppercase text-amber-600 tracking-wider">
                 Editar Cadastro: {editingVehicle.placa}
               </h3>
@@ -1531,13 +1669,13 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                 <button
                   type="button"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-50 rounded-lg cursor-pointer transition-colors"
+                  className="px-5 py-2.5 border border-slate-200 text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-50 rounded-xl cursor-pointer transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-lg cursor-pointer transition-colors shadow-xs"
+                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 text-blue-950 rounded-xl cursor-pointer transition-colors shadow-xs font-bold"
                 >
                   Salvar Alterações
                 </button>
@@ -1551,7 +1689,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
       {selectedVehicle && (
         <div
           id="vehicle-drawer-overlay"
-          className="fixed left-0 right-0 bottom-0 top-[68px] bg-slate-900/40 backdrop-blur-xs z-[9999] flex justify-end overflow-hidden"
+          className="fixed left-0 right-0 bottom-0 top-[68px] bg-blue-950/45 backdrop-blur-xs z-[9999] flex justify-end overflow-hidden"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget) {
               setSelectedVehicle(null);
@@ -1563,14 +1701,14 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             onMouseDown={(e) => e.stopPropagation()}
-            className="relative w-full max-w-4xl bg-white border-l border-slate-200 h-[calc(100dvh-68px)] shadow-2xl font-sans flex flex-col overflow-hidden"
+            className="relative w-full max-w-4xl bg-white border-l border-blue-100 h-[calc(100dvh-68px)] shadow-2xl font-sans flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="shrink-0 sticky top-0 bg-white px-6 pt-5 relative z-20 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-4 mb-5">
+            <div className="shrink-0 sticky top-0 bg-gradient-to-br from-white via-white to-blue-50 px-6 pt-5 relative z-20 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
+              <div className="flex items-center justify-between border-b border-blue-100 pb-4 mb-5">
                 <div className="flex items-center gap-4">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="p-2 py-1 bg-slate-50 border border-slate-200 rounded font-mono font-bold text-slate-850 text-base shadow-xs">
+                    <span className="p-2 py-1 bg-blue-50 border border-blue-100 rounded-lg font-mono font-black text-blue-950 text-base tracking-wider shadow-xs">
                       {selectedVehicle.placa}
                     </span>
                     <button
@@ -1914,15 +2052,15 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
 
       {/* CRLV Attachment Modal */}
       {crlvVehicle && (
-        <div id="crlv-attachment-modal" className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
+        <div id="crlv-attachment-modal" className="fixed inset-0 bg-blue-950/70 backdrop-blur-sm z-[10000] flex items-center justify-center p-4">
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 font-sans text-xs"
+            className="w-full max-w-md bg-white border border-blue-100 rounded-3xl shadow-2xl p-6 font-sans text-xs"
           >
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
+            <div className="flex items-center justify-between border-b border-blue-100 pb-3 mb-4">
               <div>
-                <h3 className="text-sm font-bold uppercase text-blue-600 tracking-wider">
+                <h3 className="text-sm font-black uppercase text-blue-700 tracking-[0.18em]">
                   CRLV da placa {crlvVehicle.placa}
                 </h3>
                 <p className="text-slate-500 mt-1">Anexe, baixe ou remova o documento salvo no cadastro do veículo.</p>
@@ -2012,7 +2150,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="w-full max-w-md bg-white border border-slate-200 rounded-2xl shadow-2xl p-6 font-sans text-xs"
+            className="w-full max-w-md bg-white border border-blue-100 rounded-3xl shadow-2xl p-6 font-sans text-xs"
           >
             <div className="flex items-center gap-4 border-b border-slate-100 pb-3 mb-4">
               <div className="p-2 bg-rose-50 text-rose-600 rounded-lg">

@@ -301,8 +301,13 @@ export default function App() {
         <div className="w-full h-full flex items-center justify-between gap-6">
           {/* Logo Brand */}
           <div className="flex items-center gap-4 shrink-0">
-            <div className="p-2 bg-blue-600 rounded-xl shadow-xs">
-              <Truck className="h-5.5 w-5.5 text-white" />
+            <div className="h-11 w-11 sm:h-12 sm:w-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center overflow-hidden shadow-xs">
+              <img
+                src="/grupo-potencial.png"
+                alt="Grupo Potencial"
+                title="Grupo Potencial"
+                className="h-full w-full object-contain p-1"
+              />
             </div>
 
             <div>

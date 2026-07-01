@@ -388,49 +388,196 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7 pb-8">
       
-      {/* Header title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-slate-200 pb-5">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-1 flex items-center gap-2">
-            <ClipboardList className="text-blue-600 h-6 w-6" />
-            Emissor de Relatórios e Auditorias
-          </h1>
-          <p className="text-sm text-slate-500 font-medium">
-            Filtre cruzamentos detalhados, confira taxas de conformidade e as trilhas de auditoria das renovações.
-          </p>
+      {/* Grupo Potencial corporate hero - sem bloco de logo */}
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
+        className="relative overflow-hidden rounded-3xl border border-blue-950/10 bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 p-6 md:p-7 shadow-xl shadow-blue-950/10"
+      >
+        <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-blue-400/10 blur-3xl" />
+        <div className="absolute -bottom-28 left-10 h-72 w-72 rounded-full bg-amber-300/10 blur-3xl" />
+        <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent" />
+
+        <div className="relative flex flex-col xl:flex-row xl:items-start justify-between gap-6">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.22em] text-amber-200 ring-1 ring-white/15">
+                <BookOpen className="h-3.5 w-3.5" />
+                Grupo Potencial
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-emerald-200 ring-1 ring-emerald-300/20">
+                Governança documental
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-blue-100 ring-1 ring-blue-300/20">
+                Auditoria de frota
+              </span>
+            </div>
+
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white leading-tight">
+              Relatórios e Auditorias
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm md:text-base text-blue-100/85 font-medium leading-relaxed">
+              Consulte cruzamentos da frota, acompanhe conformidade documental e exporte trilhas de auditoria com segurança, rastreabilidade e padrão corporativo.
+            </p>
+          </div>
+
+          <div className="w-full xl:w-auto xl:min-w-[360px] rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur shadow-lg shadow-slate-950/10">
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div className="rounded-xl bg-white/10 px-3 py-2 ring-1 ring-white/10">
+                <span className="block text-[10px] font-bold uppercase tracking-widest text-blue-100/70">
+                  Aplicáveis
+                </span>
+                <strong className="mt-1 block text-2xl font-black text-white">
+                  {reportStats.totalAplicaveis}
+                </strong>
+              </div>
+              <div className="rounded-xl bg-white/10 px-3 py-2 ring-1 ring-white/10">
+                <span className="block text-[10px] font-bold uppercase tracking-widest text-blue-100/70">
+                  Conformidade
+                </span>
+                <strong className="mt-1 block text-2xl font-black text-amber-200">
+                  {reportStats.generalCompliance}%
+                </strong>
+              </div>
+              <div className="rounded-xl bg-white/10 px-3 py-2 ring-1 ring-white/10">
+                <span className="block text-[10px] font-bold uppercase tracking-widest text-blue-100/70">
+                  Auditorias
+                </span>
+                <strong className="mt-1 block text-2xl font-black text-white">
+                  {activeAuditRenewals.length}
+                </strong>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleExportReportCSV}
+              disabled={exportableReportSet.length === 0}
+              className="mt-4 w-full inline-flex items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-xs font-black uppercase tracking-wider text-slate-950 shadow-lg shadow-amber-950/20 transition-all hover:bg-amber-300 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-white/10 disabled:text-white/40 disabled:shadow-none"
+              title="Exportar relatório CSV conforme filtros aplicados, sem documentos não aplicáveis"
+            >
+              <Download className="h-4 w-4" />
+              Exportar CSV filtrado
+            </button>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* Indicadores executivos */}
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg">
+          <div className="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-blue-100/80 blur-2xl" />
+          <div className="relative flex items-start justify-between gap-4">
+            <div>
+              <span className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+                Documentos filtrados
+              </span>
+              <strong className="mt-2 block text-3xl font-black text-slate-950">
+                {reportStats.total}
+              </strong>
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                Registros aplicáveis na consulta atual
+              </p>
+            </div>
+            <div className="rounded-2xl bg-blue-50 p-3 text-blue-700 ring-1 ring-blue-100">
+              <FileText className="h-5 w-5" />
+            </div>
+          </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleExportReportCSV}
-          disabled={exportableReportSet.length === 0}
-          className="flex items-center gap-2 py-2.5 px-4 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold rounded-lg text-xs border border-blue-600 disabled:border-slate-200 transition-colors cursor-pointer disabled:cursor-not-allowed shadow-xs"
-          title="Exportar relatório CSV conforme filtros aplicados, sem documentos não aplicáveis"
-        >
-          <Download className="h-4 w-4" />
-          Exportar CSV filtrado
-        </button>
+        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg">
+          <div className="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-emerald-100/80 blur-2xl" />
+          <div className="relative flex items-start justify-between gap-4">
+            <div>
+              <span className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+                Taxa de conformidade
+              </span>
+              <strong className="mt-2 block text-3xl font-black text-slate-950">
+                {reportStats.generalCompliance}%
+              </strong>
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                Válidos + atenção sobre aplicáveis
+              </p>
+            </div>
+            <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-700 ring-1 ring-emerald-100">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+
+        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg">
+          <div className="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-rose-100/80 blur-2xl" />
+          <div className="relative flex items-start justify-between gap-4">
+            <div>
+              <span className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+                Risco documental
+              </span>
+              <strong className="mt-2 block text-3xl font-black text-slate-950">
+                {reportStats.criticos + reportStats.vencidos}
+              </strong>
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                Críticos e vencidos no filtro
+              </p>
+            </div>
+            <div className="rounded-2xl bg-rose-50 p-3 text-rose-700 ring-1 ring-rose-100">
+              <AlertOctagon className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+
+        <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-lg">
+          <div className="absolute right-0 top-0 h-24 w-24 translate-x-8 -translate-y-8 rounded-full bg-amber-100/80 blur-2xl" />
+          <div className="relative flex items-start justify-between gap-4">
+            <div>
+              <span className="text-[11px] font-black uppercase tracking-[0.18em] text-slate-500">
+                Trilhas registradas
+              </span>
+              <strong className="mt-2 block text-3xl font-black text-slate-950">
+                {activeAuditRenewals.length}
+              </strong>
+              <p className="mt-1 text-xs font-semibold text-slate-500">
+                Renovações e edições auditáveis
+              </p>
+            </div>
+            <div className="rounded-2xl bg-amber-50 p-3 text-amber-700 ring-1 ring-amber-100">
+              <ClipboardList className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Structured multi-filter query block */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-1.5">
-          <Layers className="h-4 w-4 text-blue-600" />
-          Gerador de Consulta Avançada de Frota
-        </h3>
+      <div className="relative overflow-hidden bg-white border border-slate-200 rounded-3xl p-6 space-y-5 shadow-lg shadow-slate-950/5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+          <div>
+            <h3 className="text-xs font-black uppercase tracking-[0.18em] text-slate-900 flex items-center gap-2">
+              <Layers className="h-4 w-4 text-blue-700" />
+              Gerador de Consulta Avançada de Frota
+            </h3>
+            <p className="mt-1 text-xs font-semibold text-slate-500">
+              Use os filtros abaixo para montar uma visão auditável antes da exportação.
+            </p>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 text-xs">
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-[11px] font-black uppercase tracking-wider text-blue-700 ring-1 ring-blue-100">
+            <Cpu className="h-3.5 w-3.5" />
+            {exportableReportSet.length} registros para exportar
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 text-xs">
           {/* Company */}
           {!selectedEmpresaGlobal && (
             <div>
-              <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Empresa da Frota</span>
+              <span className="block text-[11px] text-slate-500 mb-1.5 font-black tracking-[0.14em] uppercase">Empresa da Frota</span>
               <select
                 id="q-company"
                 value={filterEmpresa}
                 onChange={(e) => setFilterEmpresa(e.target.value)}
-                className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
+                className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-800 shadow-sm outline-none transition-all cursor-pointer focus:border-blue-700 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
               >
                 <option value="">Todas</option>
                 {companies.filter(c => canAccessEmpresa(currentUser, c.id)).map(c => <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companies)}</option>)}
@@ -440,12 +587,12 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* Unit Type */}
           <div>
-            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Tipo de Unidade</span>
+            <span className="block text-[11px] text-slate-500 mb-1.5 font-black tracking-[0.14em] uppercase">Tipo de Unidade</span>
             <select
               id="q-type"
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
+              className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-800 shadow-sm outline-none transition-all cursor-pointer focus:border-blue-700 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
             >
               <option value="">Todos</option>
               <option value="Cavalo">Cavalo</option>
@@ -461,12 +608,12 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* Document Type */}
           <div>
-            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Tipo de Documento</span>
+            <span className="block text-[11px] text-slate-500 mb-1.5 font-black tracking-[0.14em] uppercase">Tipo de Documento</span>
             <select
               id="q-doc-type"
               value={filterDocType}
               onChange={(e) => setFilterDocType(e.target.value)}
-              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
+              className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-800 shadow-sm outline-none transition-all cursor-pointer focus:border-blue-700 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
             >
               <option value="">Todos</option>
               <option value="INMETRO">INMETRO</option>
@@ -481,12 +628,12 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* Status */}
           <div>
-            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Status Documento</span>
+            <span className="block text-[11px] text-slate-500 mb-1.5 font-black tracking-[0.14em] uppercase">Status Documento</span>
             <select
               id="q-status"
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
+              className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-800 shadow-sm outline-none transition-all cursor-pointer focus:border-blue-700 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
             >
               <option value="">Todos</option>
               <option value="Válido">Válido</option>
@@ -499,12 +646,12 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* Plate Search */}
           <div>
-            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Placa Específica</span>
+            <span className="block text-[11px] text-slate-500 mb-1.5 font-black tracking-[0.14em] uppercase">Placa Específica</span>
             <input
               id="q-plate"
               type="text"
               placeholder="Ex: ABC1D23"
-              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-medium font-mono"
+              className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold font-mono text-slate-800 shadow-sm outline-none transition-all focus:border-blue-700 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
               value={filterPlaca}
               onChange={(e) => setFilterPlaca(e.target.value)}
             />
@@ -512,12 +659,12 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* Applicability selector */}
           <div>
-            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Aplicabilidade</span>
+            <span className="block text-[11px] text-slate-500 mb-1.5 font-black tracking-[0.14em] uppercase">Aplicabilidade</span>
             <select
               id="q-app"
               value={filterApplicableOnly}
               onChange={(e) => setFilterApplicableOnly(e.target.value as any)}
-              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
+              className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-800 shadow-sm outline-none transition-all cursor-pointer focus:border-blue-700 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
             >
               <option value="all">Documentos gerais (Todos)</option>
               <option value="applicable">Somente aplicáveis no veículo</option>
@@ -527,12 +674,12 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* User who generated last change */}
           <div>
-            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Últmo usuário modificador</span>
+            <span className="block text-[11px] text-slate-500 mb-1.5 font-black tracking-[0.14em] uppercase">Últmo usuário modificador</span>
             <select
               id="q-user"
               value={filterUserModified}
               onChange={(e) => setFilterUserModified(e.target.value)}
-              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
+              className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-800 shadow-sm outline-none transition-all cursor-pointer focus:border-blue-700 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
             >
               <option value="">Todos os usuários</option>
               {modifyingUsersList.map(usr => <option key={usr} value={usr}>{usr}</option>)}
@@ -541,13 +688,25 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* Date Picker Start */}
           <div>
-            <span className="block text-slate-500 mb-1 font-bold tracking-wide uppercase text-xs">Vencimento inicial</span>
+            <span className="block text-[11px] text-slate-500 mb-1.5 font-black tracking-[0.14em] uppercase">Vencimento inicial</span>
             <input
               id="q-start-date"
               type="date"
-              className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-855 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
+              className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-800 shadow-sm outline-none transition-all cursor-pointer focus:border-blue-700 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
               value={filterStartDate}
               onChange={(e) => setFilterStartDate(e.target.value)}
+            />
+          </div>
+
+          {/* Date Picker End */}
+          <div>
+            <span className="block text-[11px] text-slate-500 mb-1.5 font-black tracking-[0.14em] uppercase">Vencimento final</span>
+            <input
+              id="q-end-date"
+              type="date"
+              className="w-full h-11 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-bold text-slate-800 shadow-sm outline-none transition-all cursor-pointer focus:border-blue-700 focus:bg-white focus:ring-4 focus:ring-blue-600/10"
+              value={filterEndDate}
+              onChange={(e) => setFilterEndDate(e.target.value)}
             />
           </div>
 
@@ -567,7 +726,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
               setFilterStartDate('');
               setFilterEndDate('');
             }}
-            className="text-xs text-rose-600 hover:text-rose-700 font-bold px-3.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-rose-50 transition-colors cursor-pointer"
+            className="inline-flex items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-black uppercase tracking-wider text-rose-700 transition-all hover:bg-rose-100 active:scale-[0.98] cursor-pointer"
           >
             Resetar Filtros
           </button>
@@ -578,67 +737,67 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
         {/* Col 1: General Results Aggregations of Query */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-800 border-b border-slate-100 pb-3">
+        <div className="relative overflow-hidden bg-white border border-slate-200 rounded-3xl p-6 space-y-5 shadow-lg shadow-slate-950/5">
+          <h3 className="text-xs font-black uppercase tracking-[0.18em] text-slate-900 border-b border-slate-100 pb-3">
             Estatísticas do Filtro Emitido
           </h3>
 
           <div className="grid grid-cols-2 gap-6">
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-center shadow-xs">
-              <span className="text-xs text-slate-500 block font-bold tracking-tight uppercase">ENCONTRADOS</span>
-              <strong className="text-xl text-slate-900 font-extrabold">{reportStats.total}</strong>
+            <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-center shadow-sm">
+              <span className="text-[10px] text-slate-500 block font-black tracking-[0.16em] uppercase">ENCONTRADOS</span>
+              <strong className="text-2xl text-slate-950 font-black">{reportStats.total}</strong>
               <span className="text-xs text-slate-400 block font-bold">documentos aplicáveis</span>
             </div>
 
-            <div className="p-3 bg-blue-50 border border-blue-250 rounded-xl text-center shadow-xs">
-              <span className="text-xs text-blue-600 block font-bold tracking-tight uppercase">CONFORMIDADE</span>
-              <strong className="text-xl text-blue-600 font-extrabold">{reportStats.generalCompliance}%</strong>
+            <div className="p-4 bg-blue-50 border border-blue-100 rounded-2xl text-center shadow-sm">
+              <span className="text-[10px] text-blue-700 block font-black tracking-[0.16em] uppercase">CONFORMIDADE</span>
+              <strong className="text-2xl text-blue-700 font-black">{reportStats.generalCompliance}%</strong>
               <span className="text-xs text-blue-400 block font-bold">taxa aplicável</span>
             </div>
           </div>
 
           <div className="space-y-2 text-xs">
-            <div className="flex justify-between items-center text-slate-600 font-semibold p-1.5 hover:bg-slate-55 rounded transition-colors">
+            <div className="flex justify-between items-center text-slate-600 font-semibold p-1.5 hover:bg-slate-50 rounded transition-colors">
               <span>Válidos</span>
               <strong className="text-emerald-600 font-bold">{reportStats.validos}</strong>
             </div>
-            <div className="flex justify-between items-center text-slate-600 font-semibold p-1.5 hover:bg-slate-55 rounded transition-colors">
+            <div className="flex justify-between items-center text-slate-600 font-semibold p-1.5 hover:bg-slate-50 rounded transition-colors">
               <span>Em Atenção</span>
               <strong className="text-amber-600 font-bold">{reportStats.atencao}</strong>
             </div>
-            <div className="flex justify-between items-center text-slate-600 font-semibold p-1.5 hover:bg-slate-55 rounded transition-colors">
+            <div className="flex justify-between items-center text-slate-600 font-semibold p-1.5 hover:bg-slate-50 rounded transition-colors">
               <span>Críticos</span>
               <strong className="text-rose-500 font-bold">{reportStats.criticos}</strong>
             </div>
-            <div className="flex justify-between items-center text-slate-600 font-semibold p-1.5 hover:bg-slate-55 rounded transition-colors">
+            <div className="flex justify-between items-center text-slate-600 font-semibold p-1.5 hover:bg-slate-50 rounded transition-colors">
               <span>Já Vencidos</span>
               <strong className="text-rose-600 font-extrabold">{reportStats.vencidos}</strong>
             </div>
-            <div className="flex justify-between items-center text-slate-600 font-semibold p-1.5 hover:bg-slate-55 rounded transition-colors">
+            <div className="flex justify-between items-center text-slate-600 font-semibold p-1.5 hover:bg-slate-50 rounded transition-colors">
             </div>
           </div>
         </div>
 
         {/* Col 2: Segmented compliance ratings (Company & Unit type summaries) */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
-          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-800 border-b border-slate-100 pb-3">
+        <div className="relative overflow-hidden bg-white border border-slate-200 rounded-3xl p-6 space-y-5 shadow-lg shadow-slate-950/5">
+          <h3 className="text-xs font-black uppercase tracking-[0.18em] text-slate-900 border-b border-slate-100 pb-3">
             Conformidades Corporativas Gerais
           </h3>
 
           {/* Breakdown by Company */}
           <div className="space-y-2.5">
-            <span className="text-xs uppercase font-bold tracking-wider text-slate-400 block">
+            <span className="text-[11px] uppercase font-black tracking-[0.16em] text-slate-400 block">
               1. Por Empresa da Frota:
             </span>
 
             {statsByEnterprise.map(comp => (
-              <div key={comp.id} className="flex items-center justify-between text-xs font-semibold">
+              <div key={comp.id} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-xs font-bold hover:bg-slate-50 transition-colors">
                 <span className="text-slate-700 truncate max-w-[170px]">{comp.nome}</span>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-slate-400 font-medium">{comp.docTotal} docs</span>
                   <span className={`font-bold ${
                     comp.compliance >= 90 ? 'text-emerald-600' :
-                    comp.compliance >= 70 ? 'text-amber-550' : 'text-rose-600'
+                    comp.compliance >= 70 ? 'text-amber-600' : 'text-rose-600'
                   }`}>
                     {comp.compliance}%
                   </span>
@@ -649,12 +808,12 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
           {/* Breakdown by Unit type */}
           <div className="space-y-2.5 pt-3 border-t border-slate-100">
-            <span className="text-xs uppercase font-bold tracking-wider text-slate-400 block">
+            <span className="text-[11px] uppercase font-black tracking-[0.16em] text-slate-400 block">
               2. Por Tipo de Unidade:
             </span>
 
             {statsByUnitType.map(item => (
-              <div key={item.tipo} className="flex items-center justify-between text-xs font-semibold">
+              <div key={item.tipo} className="flex items-center justify-between gap-3 rounded-xl px-3 py-2 text-xs font-bold hover:bg-slate-50 transition-colors">
                 <span className="text-slate-700">{item.tipo}</span>
                 <span className="font-bold text-slate-900">{item.compliance}%</span>
               </div>
@@ -663,19 +822,19 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
         </div>
 
         {/* Col 3: Priority alerts - plates with missing properties */}
-        <div className="bg-white border border-slate-200 rounded-2xl p-6 space-y-4 shadow-sm">
+        <div className="relative overflow-hidden bg-white border border-slate-200 rounded-3xl p-6 space-y-5 shadow-lg shadow-slate-950/5">
           <h3 className="text-xs font-bold uppercase tracking-widest text-slate-900 border-b border-slate-100 pb-3">
             Placas com Pendências Impeditivas
           </h3>
 
           {problematicPlates.length === 0 ? (
-            <div className="py-8 text-center text-xs text-slate-450 italic font-medium">
+            <div className="py-8 text-center text-xs text-slate-400 italic font-medium">
               Nenhuma placa com documentos exigíveis em falta ou atualmente vencidos.
             </div>
           ) : (
             <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1 scrollbar-thin">
               {problematicPlates.map(item => (
-                <div key={item.plate} className="text-xs p-2 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between shadow-xs">
+                <div key={item.plate} className="text-xs p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between shadow-sm hover:border-blue-100 hover:bg-white transition-all">
                   <div className="space-y-0.5">
                     <span className="font-mono font-bold text-slate-900 bg-white border border-slate-200 shadow-xs px-1.5 py-0.5 rounded text-sm">
                       {item.plate}
@@ -685,7 +844,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
                   <div className="text-right space-y-0.5 text-xs font-bold">
                     {item.expiredCount > 0 && (
-                      <span className="block text-rose-605 font-bold">{item.expiredCount} vencidos</span>
+                      <span className="block text-rose-600 font-bold">{item.expiredCount} vencidos</span>
                     )}
                     {item.missingCount > 0 && (
                       <span className="block text-amber-600 font-semibold">{item.missingCount} sem dados/faltantes</span>
@@ -700,9 +859,11 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
       </div>
 
       {/* MASTER SYSTEM AUDIT LOGS TRAIL SECTION */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-800 border-b border-slate-100 pb-4 mb-4 flex items-center gap-1.5">
-          <ClipboardList className="h-4.5 w-4.5 text-blue-600" />
+      <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-950/5">
+        <div className="absolute right-0 top-0 h-32 w-32 translate-x-10 -translate-y-10 rounded-full bg-blue-100/70 blur-3xl" />
+
+        <h3 className="relative text-xs font-black uppercase tracking-[0.18em] text-slate-900 border-b border-slate-100 pb-4 mb-4 flex items-center gap-2">
+          <ClipboardList className="h-4.5 w-4.5 text-blue-700" />
           Relação Histórica de Documentos Renovados / Alterações Gerais
         </h3>
 
@@ -716,10 +877,10 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
               const logDateStr = new Date(log.dataHora).toLocaleDateString('pt-BR');
               const logTimeStr = new Date(log.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
               return (
-                <div key={log.id} className="text-xs p-3.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-col md:flex-row justify-between gap-6 shadow-xs hover:bg-slate-100/40 transition-colors">
+                <div key={log.id} className="text-xs p-4 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col md:flex-row justify-between gap-6 shadow-sm hover:bg-white hover:border-blue-100 hover:shadow-md transition-all">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-mono bg-white border border-slate-200 text-slate-800 px-2 py-0.5 rounded font-bold text-sm shadow-xs">
+                      <span className="font-mono bg-white border border-slate-200 text-slate-900 px-2.5 py-1 rounded-lg font-black text-sm shadow-sm">
                         {log.placa}
                       </span>
                       {getVehicleBaseLabel(vehicles.find(v => v.id === log.veiculoId || v.placa === log.placa)) && (
@@ -727,7 +888,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
                           {getVehicleBaseLabel(vehicles.find(v => v.id === log.veiculoId || v.placa === log.placa))}
                         </span>
                       )}
-                      <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 px-1.5 rounded uppercase">
+                      <span className="text-[11px] font-black text-blue-700 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
                         {obterNomeEmpresa(log.empresaId, companies)}
                       </span>
                       <span className="font-bold text-slate-800">{log.campoAlterado}</span>
@@ -738,7 +899,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
                     </p>
 
                     {log.observacao && (
-                      <p className="text-sm text-slate-500 italic pl-2 border-l-2 border-blue-400 mt-1 font-semibold">
+                      <p className="text-sm text-slate-500 italic pl-3 border-l-4 border-amber-300 mt-2 font-semibold">
                         Justificativa inserida: "{log.observacao}"
                       </p>
                     )}

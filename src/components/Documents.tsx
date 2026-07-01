@@ -301,108 +301,259 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
     return audits.filter(a => a.documentoId === renewingDoc.id);
   }, [renewingDoc, audits]);
 
+  const documentSummary = useMemo(() => {
+    const total = filteredDocs.length;
+    const validos = filteredDocs.filter(d => d.statusDocumento === 'Válido').length;
+    const atencao = filteredDocs.filter(d => d.statusDocumento === 'Atenção').length;
+    const criticos = filteredDocs.filter(d => d.statusDocumento === 'Crítico').length;
+    const vencidos = filteredDocs.filter(d => d.statusDocumento === 'Vencido').length;
+    const anexados = filteredDocs.filter(d => Boolean(d.arquivoAnexo)).length;
+
+    return {
+      total,
+      validos,
+      atencao,
+      criticos,
+      vencidos,
+      anexados,
+      pendencias: vencidos + criticos,
+      taxaComAnexo: total > 0 ? Math.round((anexados / total) * 100) : 0,
+    };
+  }, [filteredDocs]);
+
+  const getStatusBadgeClasses = (status: StatusDocumento, isNa: boolean) => {
+    if (isNa) return 'bg-slate-100 text-slate-500 border-slate-200';
+    if (status === 'Válido') return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    if (status === 'Atenção') return 'bg-amber-50 text-amber-700 border-amber-200';
+    if (status === 'Crítico') return 'bg-orange-50 text-orange-700 border-orange-200';
+    return 'bg-rose-50 text-rose-700 border-rose-200';
+  };
+
+  const getStatusRowClasses = (status: StatusDocumento, isNa: boolean) => {
+    if (isNa) return 'border-l-slate-300 opacity-60';
+    if (status === 'Válido') return 'border-l-emerald-500 hover:bg-emerald-50/30';
+    if (status === 'Atenção') return 'border-l-amber-500 hover:bg-amber-50/30';
+    if (status === 'Crítico') return 'border-l-orange-500 hover:bg-orange-50/30';
+    return 'border-l-rose-500 hover:bg-rose-50/30';
+  };
+
   return (
     <div className="space-y-6">
-      
-      {/* Page Title */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b border-slate-200 pb-5">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-1 flex items-center gap-2">
-            <FileText className="text-blue-600 h-6 w-6" />
-            Vencimentos e Documentação Operacional
-          </h1>
-          <p className="text-sm text-slate-500 font-sans">
-            Acompanhe o andamento de CIV, CIPP, Tacógrafo, Inmetro e Laudos. Insira renovações com justificativa.
-          </p>
+      {/* Hero corporativo */}
+      <div className="relative overflow-hidden rounded-3xl border border-slate-800 bg-slate-950 p-6 shadow-xl">
+        <div className="absolute -right-16 -top-16 h-48 w-48 rounded-full bg-blue-500/20 blur-3xl" />
+        <div className="absolute -bottom-20 left-1/3 h-56 w-56 rounded-full bg-amber-400/10 blur-3xl" />
+
+        <div className="relative z-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <div>
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-400/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.28em] text-amber-200">
+                <FileText className="h-3.5 w-3.5" />
+                Gestão documental da frota
+              </div>
+
+              <h1 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+                Vencimentos e Documentação Operacional
+              </h1>
+
+              <p className="mt-2 max-w-3xl text-sm font-medium leading-relaxed text-slate-300">
+                Controle de CIV, CIPP, Tacógrafo, Inmetro e laudos obrigatórios com rastreabilidade, anexos e histórico de auditoria.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 sm:min-w-[360px]">
+            <div className="rounded-2xl border border-white/10 bg-white/10 p-4 backdrop-blur">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-slate-300">Documentos</span>
+              <strong className="mt-1 block text-3xl font-extrabold text-white">{documentSummary.total}</strong>
+              <span className="text-xs text-slate-300">no filtro atual</span>
+            </div>
+
+            <div className="rounded-2xl border border-rose-300/20 bg-rose-500/10 p-4 backdrop-blur">
+              <span className="text-[11px] font-bold uppercase tracking-widest text-rose-100">Pendências</span>
+              <strong className="mt-1 block text-3xl font-extrabold text-white">{documentSummary.pendencias}</strong>
+              <span className="text-xs text-rose-100">vencidos + críticos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Indicadores rápidos */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="group overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Válidos</span>
+              <strong className="mt-2 block text-3xl font-extrabold text-slate-950">{documentSummary.validos}</strong>
+              <p className="mt-1 text-xs font-medium text-slate-500">documentos conformes</p>
+            </div>
+            <div className="rounded-2xl bg-emerald-50 p-3 text-emerald-600 ring-1 ring-emerald-100">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+          </div>
+        </div>
+
+        <div className="group overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Atenção</span>
+              <strong className="mt-2 block text-3xl font-extrabold text-slate-950">{documentSummary.atencao}</strong>
+              <p className="mt-1 text-xs font-medium text-slate-500">vencem em 31 a 60 dias</p>
+            </div>
+            <div className="rounded-2xl bg-amber-50 p-3 text-amber-600 ring-1 ring-amber-100">
+              <Clock className="h-6 w-6" />
+            </div>
+          </div>
+        </div>
+
+        <div className="group overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Críticos / Vencidos</span>
+              <strong className="mt-2 block text-3xl font-extrabold text-slate-950">{documentSummary.pendencias}</strong>
+              <p className="mt-1 text-xs font-medium text-slate-500">exigem prioridade operacional</p>
+            </div>
+            <div className="rounded-2xl bg-rose-50 p-3 text-rose-600 ring-1 ring-rose-100">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
+          </div>
+        </div>
+
+        <div className="group overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Com anexo</span>
+              <strong className="mt-2 block text-3xl font-extrabold text-slate-950">{documentSummary.taxaComAnexo}%</strong>
+              <p className="mt-1 text-xs font-medium text-slate-500">{documentSummary.anexados} arquivos registrados</p>
+            </div>
+            <div className="rounded-2xl bg-blue-50 p-3 text-blue-600 ring-1 ring-blue-100">
+              <Upload className="h-6 w-6" />
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Advanced filters */}
-      <div className="bg-white border border-slate-200 rounded-xl p-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 shadow-sm">
-        
-        {/* Search by plate */}
-        <div className="relative">
-          <input
-            id="search-doc-plate-input"
-            type="text"
-            placeholder="Filtrar por Placa (ex: ABC1D23)..."
-            value={plateQuery}
-            onChange={(e) => setPlateQuery(e.target.value.toUpperCase())}
-            className="w-full bg-white border border-slate-200 px-3 py-2 pl-9 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all font-mono shadow-sm"
-          />
-          <Search className="absolute left-3 top-3 h-3.5 w-3.5 text-slate-400" />
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+        <div className="mb-4 flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wider text-slate-900">
+              <Search className="h-4 w-4 text-blue-600" />
+              Filtros de documentos
+            </h2>
+            <p className="mt-1 text-xs font-medium text-slate-500">
+              Localize por placa, tipo documental, status calculado e empresa da frota.
+            </p>
+          </div>
+
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">
+            <ClipboardList className="h-3.5 w-3.5" />
+            {filteredDocs.length} resultado(s)
+          </div>
         </div>
 
-        {/* Filter by Document Type */}
-        <div>
-          <select
-            id="filter-doc-type"
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="w-full bg-white border border-slate-200 px-3 py-2 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
-          >
-            <option value="">Todos tipos documentais</option>
-            <option value="INMETRO">INMETRO</option>
-            <option value="TACÓGRAFO">TACÓGRAFO</option>
-            <option value="CIV">CIV</option>
-            <option value="CIPP">CIPP</option>
-            <option value="LAUDO QUINTA RODA">LAUDO QUINTA RODA</option>
-            <option value="LAUDO DE BOTTOM">LAUDO DE BOTTOM</option>
-            <option value="LAUDO MANGOTE">LAUDO MANGOTE</option>
-          </select>
-        </div>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="relative">
+            <input
+              id="search-doc-plate-input"
+              type="text"
+              placeholder="Filtrar por placa. Ex.: ABC1D23"
+              value={plateQuery}
+              onChange={(e) => setPlateQuery(e.target.value.toUpperCase())}
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pl-10 font-mono text-sm font-bold text-slate-800 shadow-inner outline-none transition-all placeholder:font-sans placeholder:font-medium focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+            />
+            <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+          </div>
 
-        {/* Filter by calculated status */}
-        <div>
-          <select
-            id="filter-doc-status"
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full bg-white border border-slate-200 px-3 py-2 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
-          >
-            <option value="">Todos os Status</option>
-            <option value="Válido">Válido ( &gt; 60 dias )</option>
-            <option value="Atenção">Atenção ( 31-60 dias )</option>
-            <option value="Crítico">Crítico ( 1-30 dias )</option>
-            <option value="Vencido">Vencido</option>
-          </select>
-        </div>
-
-        {/* Filter by corporate company */}
-        {!selectedEmpresaGlobal && (
           <div>
             <select
-              id="filter-doc-company"
-              value={companyFilter}
-              onChange={(e) => setCompanyFilter(e.target.value)}
-              className="w-full bg-white border border-slate-200 px-3 py-2 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
+              id="filter-doc-type"
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
+              className="w-full cursor-pointer rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 shadow-inner outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
             >
-              <option value="">Todas empresas da frota</option>
-              {EMPRESAS_PADRAO.filter((empresa) => canAccessEmpresa(currentUser, empresa.id)).map((empresa) => (
-                <option key={empresa.id} value={empresa.id}>{obterNomeEmpresa(empresa.id, EMPRESAS_PADRAO)}</option>
-              ))}
+              <option value="">Todos tipos documentais</option>
+              <option value="INMETRO">INMETRO</option>
+              <option value="TACÓGRAFO">TACÓGRAFO</option>
+              <option value="CIV">CIV</option>
+              <option value="CIPP">CIPP</option>
+              <option value="LAUDO QUINTA RODA">LAUDO QUINTA RODA</option>
+              <option value="LAUDO DE BOTTOM">LAUDO DE BOTTOM</option>
+              <option value="LAUDO MANGOTE">LAUDO MANGOTE</option>
             </select>
           </div>
-        )}
+
+          <div>
+            <select
+              id="filter-doc-status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="w-full cursor-pointer rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 shadow-inner outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+            >
+              <option value="">Todos os status</option>
+              <option value="Válido">Válido (&gt; 60 dias)</option>
+              <option value="Atenção">Atenção (31-60 dias)</option>
+              <option value="Crítico">Crítico (1-30 dias)</option>
+              <option value="Vencido">Vencido</option>
+            </select>
+          </div>
+
+          {!selectedEmpresaGlobal && (
+            <div>
+              <select
+                id="filter-doc-company"
+                value={companyFilter}
+                onChange={(e) => setCompanyFilter(e.target.value)}
+                className="w-full cursor-pointer rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-bold text-slate-700 shadow-inner outline-none transition-all focus:border-blue-500 focus:bg-white focus:ring-4 focus:ring-blue-500/10"
+              >
+                <option value="">Todas empresas da frota</option>
+                {EMPRESAS_PADRAO.filter((empresa) => canAccessEmpresa(currentUser, empresa.id)).map((empresa) => (
+                  <option key={empresa.id} value={empresa.id}>{obterNomeEmpresa(empresa.id, EMPRESAS_PADRAO)}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Main documents table */}
-      <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+      <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wider text-slate-900">
+              <FileText className="h-4 w-4 text-blue-600" />
+              Documentos exigíveis
+            </h2>
+            <p className="mt-1 text-xs font-medium text-slate-500">
+              Painel de vencimentos aplicáveis às placas ativas e autorizadas para o usuário.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-wider">
+            <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700 ring-1 ring-emerald-100">Válidos: {documentSummary.validos}</span>
+            <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-700 ring-1 ring-amber-100">Atenção: {documentSummary.atencao}</span>
+            <span className="rounded-full bg-rose-50 px-3 py-1 text-rose-700 ring-1 ring-rose-100">Vencidos: {documentSummary.vencidos}</span>
+          </div>
+        </div>
+
         {filteredDocs.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 text-sm italic">
-            Nenhum documento encontrado para os filtros e placa informados.
+          <div className="flex flex-col items-center justify-center gap-3 py-16 text-center text-slate-400">
+            <div className="rounded-2xl bg-slate-50 p-4 ring-1 ring-slate-100">
+              <Search className="h-8 w-8 text-slate-300" />
+            </div>
+            <p className="text-sm font-semibold italic">Nenhum documento encontrado para os filtros e placa informados.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse font-sans">
+            <table className="w-full border-collapse text-left font-sans text-sm">
               <thead>
-                <tr className="bg-slate-50 text-slate-500 border-b border-slate-200 font-semibold tracking-wider text-xs uppercase">
-                  <th className="p-4">Placa de Ativo</th>
+                <tr className="border-b border-slate-200 bg-slate-950 text-xs font-bold uppercase tracking-wider text-slate-200">
+                  <th className="p-4">Placa / Base</th>
                   <th className="p-4">Empresa</th>
-                  <th className="p-4">Tipo Documento</th>
+                  <th className="p-4">Documento</th>
                   <th className="p-4">Vencimento</th>
-                  <th className="p-4 text-center">Calculado</th>
-                  <th className="p-4">Arquivo Anexo</th>
+                  <th className="p-4 text-center">Status calculado</th>
+                  <th className="p-4">Comprovante</th>
                   <th className="p-4 text-right">Ação</th>
                 </tr>
               </thead>
@@ -414,63 +565,60 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                   const isNa = !doc.aplicavel;
 
                   return (
-                    <tr 
-                      key={doc.id} 
-                      className={`hover:bg-slate-50/50 transition-colors ${
-                        isNa ? 'opacity-60' : ''
-                      }`}
+                    <tr
+                      key={doc.id}
+                      className={`group border-l-4 bg-white transition-all ${getStatusRowClasses(doc.statusDocumento, isNa)}`}
                     >
                       <td className="p-4 font-bold">
-                        <span className="font-mono bg-slate-100 border border-slate-200 text-slate-800 rounded px-1.5 py-0.5 shadow-xs">
-                          {doc.placa}
-                        </span>
-                        {getVehicleBaseLabel(getDocVehicle(doc)) && (
-                          <span className="ml-1.5 text-[11px] bg-blue-50 border border-blue-200 text-blue-700 rounded px-1.5 py-0.5 shadow-xs">
-                            {getVehicleBaseLabel(getDocVehicle(doc))}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-1 font-mono text-xs font-extrabold text-slate-900 shadow-xs group-hover:border-blue-300">
+                            {doc.placa}
                           </span>
-                        )}
+                          {getVehicleBaseLabel(getDocVehicle(doc)) && (
+                            <span className="rounded-lg border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-extrabold text-blue-700 shadow-xs">
+                              {getVehicleBaseLabel(getDocVehicle(doc))}
+                            </span>
+                          )}
+                        </div>
                       </td>
 
-                      <td className="p-4 text-slate-500 font-medium select-none">
-                        {formatarNomeEmpresaId(doc.empresaId)}
+                      <td className="p-4 select-none">
+                        <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-bold text-slate-600">
+                          {formatarNomeEmpresaId(doc.empresaId)}
+                        </span>
                       </td>
 
                       <td className="p-4">
-                        <span className="font-bold text-slate-700 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded text-xs shadow-xs">
+                        <span className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-extrabold text-slate-800 shadow-xs">
+                          <FileText className="h-3.5 w-3.5 text-blue-600" />
                           {doc.tipoDocumento}
                         </span>
                       </td>
 
-                      <td className="p-4 text-slate-600 font-medium">
+                      <td className="p-4 font-medium text-slate-600">
                         {isNa ? (
-                          <span className="text-slate-400 font-sans font-light">-</span>
+                          <span className="font-sans font-light text-slate-400">-</span>
                         ) : doc.dataVencimento ? (
-                          <div className="flex items-center gap-1.5">
-                            <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                            <span className={isExp ? 'text-rose-600 font-bold' : isCrit ? 'text-amber-600 font-semibold' : 'text-slate-600'}>
+                          <div className="flex items-center gap-2">
+                            <Calendar className={`h-4 w-4 shrink-0 ${isExp ? 'text-rose-500' : isCrit ? 'text-orange-500' : isAtt ? 'text-amber-500' : 'text-slate-400'}`} />
+                            <span className={isExp ? 'font-extrabold text-rose-600' : isCrit ? 'font-bold text-orange-600' : isAtt ? 'font-semibold text-amber-600' : 'text-slate-700'}>
                               {formatarDataBR(doc.dataVencimento)}
                             </span>
                           </div>
                         ) : (
-                          <span className="text-rose-500 font-bold italic">Sem data cadastrada</span>
+                          <span className="font-bold italic text-rose-500">Sem data cadastrada</span>
                         )}
                       </td>
 
                       <td className="p-4 text-center">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-bold border select-none ${
-                          isNa ? 'bg-slate-100 text-slate-450 border-slate-200' :
-                          doc.statusDocumento === 'Válido' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                          isAtt ? 'bg-amber-50 text-amber-700 border-amber-200' :
-                          isCrit ? 'bg-rose-50 text-rose-700 border-rose-200 animate-pulse' :
-                          'bg-rose-50 text-rose-700 border-rose-200'
-                        }`}>
+                        <span className={`inline-flex items-center justify-center rounded-full border px-3 py-1 text-xs font-extrabold shadow-xs ${getStatusBadgeClasses(doc.statusDocumento, isNa)}`}>
                           {doc.statusDocumento}
                         </span>
                       </td>
 
                       <td className="p-4">
                         {isNa ? (
-                          <span className="text-slate-400 font-light">-</span>
+                          <span className="font-light text-slate-400">-</span>
                         ) : doc.arquivoAnexo ? (
                           <a
                             href={doc.arquivoAnexoConteudo || '#'}
@@ -481,17 +629,15 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                                 alert('Este é um anexo legado ou simulado e não possui conteúdo para download.');
                               }
                             }}
-                            className="text-slate-650 font-semibold flex items-center gap-1.5 hover:text-blue-600 transition-colors cursor-pointer" 
+                            className="inline-flex max-w-[180px] items-center gap-2 rounded-lg border border-blue-100 bg-blue-50 px-2.5 py-1.5 text-xs font-bold text-blue-700 transition-colors hover:bg-blue-100"
                             title="Clique para baixar o comprovante"
                           >
-                            <Upload className="h-3.5 w-3.5 text-blue-600 shrink-0" />
-                            <span className="truncate max-w-[130px] font-mono text-xs text-blue-600 decoration-blue-500 underline">
-                              {doc.arquivoAnexo}
-                            </span>
+                            <Upload className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate font-mono underline decoration-blue-400">{doc.arquivoAnexo}</span>
                           </a>
                         ) : (
-                          <span className="text-xs text-slate-400 italic flex items-center gap-1 select-none">
-                            <Info className="h-3 w-3 text-slate-350" />
+                          <span className="flex items-center gap-1 text-xs italic text-slate-400 select-none">
+                            <Info className="h-3.5 w-3.5 text-slate-350" />
                             Sem comprovante
                           </span>
                         )}
@@ -501,9 +647,9 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                         {canWrite && (
                           <button
                             onClick={() => openRenewModal(doc)}
-                            className="p-1 px-3 bg-slate-50 hover:bg-blue-50 text-xs border border-slate-200 text-slate-600 hover:text-blue-600 font-bold rounded cursor-pointer flex items-center gap-1 ml-auto transition-all duration-150 active:scale-95 shadow-xs"
+                            className="ml-auto inline-flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-600 px-3 py-2 text-xs font-extrabold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md active:scale-95"
                           >
-                            <Edit2 className="h-2.5 w-2.5" />
+                            <Edit2 className="h-3.5 w-3.5" />
                             Renovar
                           </button>
                         )}
@@ -521,7 +667,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
       {renewingDoc && (
         <div
           id="renew-document-modal"
-          className="fixed left-0 right-0 bottom-0 top-[68px] bg-slate-900/60 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 overflow-hidden"
+          className="fixed left-0 right-0 bottom-0 top-[68px] bg-slate-950/70 backdrop-blur-sm z-[9999] flex items-center justify-center p-4 overflow-hidden"
           onMouseDown={(e) => {
             if (e.target === e.currentTarget && !isSavingRenewal) {
               setRenewingDoc(null);
@@ -532,23 +678,26 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
             initial={{ scale: 0.95, opacity: 0, y: 12 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             onMouseDown={(e) => e.stopPropagation()}
-            className="w-full max-w-2xl max-h-[calc(100dvh-100px)] bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden flex flex-col"
+            className="w-full max-w-3xl max-h-[calc(100dvh-100px)] bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden flex flex-col"
           >
             {/* Modal header */}
-            <div className="shrink-0 bg-white px-6 pt-6 relative z-20 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-4">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 bg-slate-100 font-mono font-bold border border-slate-200 text-blue-600 rounded shadow-xs">
+            <div className="shrink-0 bg-slate-950 px-6 pt-6 relative z-20 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
+              <div className="flex items-center justify-between border-b border-white/10 pb-4 mb-4">
+                <div className="flex items-center gap-3">
+                  <div className="hidden h-10 w-10 items-center justify-center rounded-xl bg-white p-1.5 sm:flex">
+                    <img src="/grupo-potencial.png" alt="Grupo Potencial" className="max-h-7 max-w-7 object-contain" />
+                  </div>
+                  <span className="px-3 py-1 bg-white/10 font-mono font-bold border border-white/15 text-white rounded-lg shadow-xs">
                     {renewingDoc.placa}
                   </span>
-                  <h3 className="text-sm font-bold text-slate-900">
+                  <h3 className="text-sm font-bold text-white">
                     Atualização / Renovação de {renewingDoc.tipoDocumento}
                   </h3>
                 </div>
                 <button 
                   onClick={() => setRenewingDoc(null)}
                   disabled={isSavingRenewal}
-                  className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 cursor-pointer shadow-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="h-9 w-9 inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 text-white hover:bg-rose-500 hover:text-white hover:border-rose-400 cursor-pointer shadow-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   title="Fechar renovação"
                   aria-label="Fechar renovação"
                 >
@@ -564,7 +713,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
               )}
             </div>
 
-            <form onSubmit={handleRenewalSubmit} className="flex-1 overflow-y-auto px-6 pb-6 pt-4 space-y-4 text-xs font-sans">
+            <form onSubmit={handleRenewalSubmit} className="flex-1 overflow-y-auto bg-slate-50 px-6 pb-6 pt-5 space-y-4 text-xs font-sans">
 
                 {inputApplicable ? (
                   <div className="space-y-4">
@@ -583,9 +732,9 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                         onDragOver={handleDragOver}
                         onDrop={handleFileDropReal}
                         onClick={handleZoneClick}
-                        className="w-full bg-white border border-dashed border-slate-250 hover:border-blue-500/55 p-4 rounded-lg cursor-pointer text-center text-xs text-slate-500 flex flex-col items-center justify-center gap-2 hover:text-slate-700 transition-colors shadow-xs py-5"
+                        className="w-full bg-white border-2 border-dashed border-blue-200 hover:border-blue-500 p-5 rounded-2xl cursor-pointer text-center text-xs text-slate-500 flex flex-col items-center justify-center gap-2 hover:text-slate-700 transition-colors shadow-sm py-6"
                       >
-                        <Upload className="h-5 w-5 text-blue-500 shrink-0 animate-pulse" />
+                        <Upload className="h-6 w-6 text-blue-600 shrink-0 animate-pulse" />
                         <span className="font-semibold text-slate-700">
                           {isReadingFile ? (
                             'Lendo arquivo anexado...'
@@ -699,7 +848,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                 </div>
 
                 {/* LOGS HISTORIC SUBPANEL */}
-                <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg space-y-2">
+                <div className="bg-white border border-slate-200 p-4 rounded-2xl space-y-2 shadow-sm">
                   <span className="font-bold text-slate-500 uppercase tracking-widest text-xs block">
                     Histórico de Auditorias de {renewingDoc.tipoDocumento} ({renewingDoc.placa})
                   </span>
@@ -734,14 +883,14 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
                     type="button"
                     onClick={() => setRenewingDoc(null)}
                     disabled={isSavingRenewal}
-                    className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-50 rounded-lg cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="px-4 py-2 border border-slate-200 text-slate-500 hover:text-slate-800 bg-white hover:bg-slate-50 rounded-xl cursor-pointer transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={isSavingRenewal || isReadingFile}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg cursor-pointer shadow-xs transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl cursor-pointer shadow-sm transition-all hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {isSavingRenewal ? 'Salvando...' : isReadingFile ? 'Lendo anexo...' : 'Gravar Renovação'}
                   </button>
