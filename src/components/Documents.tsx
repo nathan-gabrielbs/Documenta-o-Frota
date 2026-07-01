@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Documento, Usuario, TipoDocumento, StatusDocumento } from '../types';
 import { dbInLocalStorage, calcularStatusDocumento, formatarDataBR } from '../utils/mockdb';
+import { canAccessEmpresa, getEffectiveEmpresaFilter } from '../utils/accessControl';
 import { EMPRESAS_PADRAO, formatarNomeEmpresaId, obterNomeEmpresa } from '../utils/empresaUtils';
 import { getVehicleBaseLabel } from '../utils/vehicleBaseUtils';
 
@@ -80,7 +81,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
     };
   }, [renewingDoc]);
 
-  const activeVehicleIds = useMemo(() => new Set(vehicles.filter(v => v.status === 'ativo').map(v => v.id)), [vehicles]);
+  const activeVehicleIds = useMemo(() => new Set(vehicles.filter(v => v.status === 'ativo' && canAccessEmpresa(currentUser, v.empresaId)).map(v => v.id)), [vehicles, currentUser]);
 
   // Perform advanced filters across the list
   const filteredDocs = useMemo(() => {
@@ -97,12 +98,13 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
       const matchesType = typeFilter ? d.tipoDocumento === typeFilter : true;
       const matchesStatus = statusFilter ? d.statusDocumento === statusFilter : true;
       
-      const effectiveCompany = selectedEmpresaGlobal || companyFilter;
+      if (!canAccessEmpresa(currentUser, d.empresaId)) return false;
+      const effectiveCompany = getEffectiveEmpresaFilter(currentUser, selectedEmpresaGlobal, companyFilter);
       const matchesCompany = effectiveCompany ? d.empresaId === effectiveCompany : true;
 
       return matchesPlate && matchesType && matchesStatus && matchesCompany;
     });
-  }, [documents, activeVehicleIds, plateQuery, typeFilter, statusFilter, companyFilter, selectedEmpresaGlobal]);
+  }, [documents, activeVehicleIds, plateQuery, typeFilter, statusFilter, companyFilter, selectedEmpresaGlobal, currentUser]);
 
   // Open renewal modal and populate previous properties
   const openRenewModal = (d: Documento) => {
@@ -376,7 +378,7 @@ export default function Documents({ currentUser, initialPlateSearch = '', select
               className="w-full bg-white border border-slate-200 px-3 py-2 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
             >
               <option value="">Todas empresas da frota</option>
-              {EMPRESAS_PADRAO.map((empresa) => (
+              {EMPRESAS_PADRAO.filter((empresa) => canAccessEmpresa(currentUser, empresa.id)).map((empresa) => (
                 <option key={empresa.id} value={empresa.id}>{obterNomeEmpresa(empresa.id, EMPRESAS_PADRAO)}</option>
               ))}
             </select>

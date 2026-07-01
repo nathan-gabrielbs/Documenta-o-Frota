@@ -13,6 +13,7 @@ import {
 import { Veiculo, Documento, Usuario, TipoUnidade, StatusVeiculo } from '../types';
 import { dbInLocalStorage, PREDEFINED_COMPANIES, isDocumentApplicable } from '../utils/mockdb';
 import { EMPRESAS_PADRAO, obterNomeEmpresa } from '../utils/empresaUtils';
+import { canAccessEmpresa, getEffectiveEmpresaFilter } from '../utils/accessControl';
 import { BASES_POTENCIAL_COMBUSTIVEIS, getVehicleBaseLabel, isPotencialCombustiveisVehicle } from '../utils/vehicleBaseUtils';
 
 interface VehiclesProps {
@@ -227,13 +228,14 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
       const matchesSearch = searchQuery ? v.placa.toLowerCase().includes(searchQuery.toLowerCase()) || v.modelo.toLowerCase().includes(searchQuery.toLowerCase()) : true;
 
       // Global and screen filters
-      const effectiveCompany = selectedEmpresaGlobal || companyFilter;
+      if (!canAccessEmpresa(currentUser, v.empresaId)) return false;
+      const effectiveCompany = getEffectiveEmpresaFilter(currentUser, selectedEmpresaGlobal, companyFilter);
       const matchesCompany = effectiveCompany ? v.empresaId === effectiveCompany : true;
       const matchesType = typeFilter ? v.tipoUnidade === typeFilter : true;
 
       return matchesSearch && matchesCompany && matchesType;
     });
-  }, [vehicles, searchQuery, companyFilter, typeFilter, selectedEmpresaGlobal]);
+  }, [vehicles, searchQuery, companyFilter, typeFilter, selectedEmpresaGlobal, currentUser]);
 
   // Generate compliance percentage for each individual vehicle based strictly on applicable docs
   const getVehicleCompliance = (vehicleId: string) => {
@@ -713,10 +715,10 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
     if (selectedVehicle.tipoUnidade === 'Cavalo') {
       if (!getFirstAvailableTrailerSlot(selectedVehicle)) return [];
       // Return Carretas/Porta Container currently uncoupled of the same company
-      return vehicles.filter(v => isTrailerUnit(v.tipoUnidade) && !v.cavaloVinculadoId && v.empresaId === selectedVehicle.empresaId);
+      return vehicles.filter(v => canAccessEmpresa(currentUser, v.empresaId) && isTrailerUnit(v.tipoUnidade) && !v.cavaloVinculadoId && v.empresaId === selectedVehicle.empresaId);
     } else if (isTrailerUnit(selectedVehicle.tipoUnidade)) {
       // Return Cavalos with at least one free trailer slot of the same company
-      return vehicles.filter(v => v.tipoUnidade === 'Cavalo' && Boolean(getFirstAvailableTrailerSlot(v)) && v.empresaId === selectedVehicle.empresaId);
+      return vehicles.filter(v => canAccessEmpresa(currentUser, v.empresaId) && v.tipoUnidade === 'Cavalo' && Boolean(getFirstAvailableTrailerSlot(v)) && v.empresaId === selectedVehicle.empresaId);
     }
     return [];
   }, [vehicles, selectedVehicle]);
@@ -896,7 +898,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
               className="w-full bg-white border border-slate-200 px-3 py-2 text-sm text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all shadow-sm font-medium cursor-pointer"
             >
               <option value="">Todas empresas</option>
-              {companyOptions.map(c => (
+              {companyOptions.filter(c => canAccessEmpresa(currentUser, c.id)).map(c => (
                 <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companyOptions)}</option>
               ))}
             </select>
@@ -1149,7 +1151,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                     }}
                     className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs font-medium cursor-pointer"
                   >
-                    {companyOptions.map(c => (
+                    {companyOptions.filter(c => canAccessEmpresa(currentUser, c.id)).map(c => (
                       <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companyOptions)}</option>
                     ))}
                   </select>
@@ -1376,7 +1378,7 @@ export default function Vehicles({ currentUser, initialSearch = '', selectedEmpr
                     })}
                     className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none transition-all text-xs font-medium cursor-pointer"
                   >
-                    {companyOptions.map(c => (
+                    {companyOptions.filter(c => canAccessEmpresa(currentUser, c.id)).map(c => (
                       <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companyOptions)}</option>
                     ))}
                   </select>

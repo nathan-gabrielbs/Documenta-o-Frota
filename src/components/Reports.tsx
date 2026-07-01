@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Veiculo, Documento, Empresa, Usuario, AuditoriaLog, TipoUnidade } from '../types';
 import { dbInLocalStorage, PREDEFINED_COMPANIES } from '../utils/mockdb';
+import { canAccessEmpresa, getEffectiveEmpresaFilter } from '../utils/accessControl';
 import { EMPRESAS_PADRAO, obterNomeEmpresa } from '../utils/empresaUtils';
 import { getVehicleBaseLabel } from '../utils/vehicleBaseUtils';
 
@@ -63,8 +64,9 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
       const veh = vehicles.find(v => v.id === doc.veiculoId);
       if (!veh || veh.status !== 'ativo') return false;
 
+      if (!canAccessEmpresa(currentUser, doc.empresaId)) return false;
       // Filter: Company (respect global selected header if applicable)
-      const targetCompany = selectedEmpresaGlobal || filterEmpresa;
+      const targetCompany = getEffectiveEmpresaFilter(currentUser, selectedEmpresaGlobal, filterEmpresa);
       if (targetCompany && doc.empresaId !== targetCompany) return false;
 
       // Filter: Unit type
@@ -104,7 +106,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
       return true;
     });
-  }, [documents, vehicles, filterEmpresa, filterType, filterDocType, filterStatus, filterPlaca, filterApplicableOnly, filterUserModified, filterStartDate, filterEndDate, selectedEmpresaGlobal]);
+  }, [documents, vehicles, currentUser, filterEmpresa, filterType, filterDocType, filterStatus, filterPlaca, filterApplicableOnly, filterUserModified, filterStartDate, filterEndDate, selectedEmpresaGlobal]);
 
   // Aggregate stats based on our active report query output
   // Regra: documentos isentos / não aplicáveis NÃO entram no cálculo de estatísticas e conformidade.
@@ -150,7 +152,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
 
   // Segmented compliance rate calculations (For Corporate Breakdown)
   const statsByEnterprise = useMemo(() => {
-    return companies.map(comp => {
+    return companies.filter(comp => canAccessEmpresa(currentUser, comp.id)).map(comp => {
       const compVehicleIds = new Set(vehicles.filter(v => v.empresaId === comp.id && v.status === 'ativo').map(v => v.id));
       const compDocs = documents.filter(d => compVehicleIds.has(d.veiculoId));
       const appDocs = compDocs.filter(d => d.aplicavel);
@@ -211,8 +213,8 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
   }, [vehicles, documents]);
 
   const activeAuditRenewals = useMemo(() => {
-    return audits.filter(a => a.tipoAcao === 'renovação' || a.tipoAcao === 'edição');
-  }, [audits]);
+    return audits.filter(a => (a.tipoAcao === 'renovação' || a.tipoAcao === 'edição') && canAccessEmpresa(currentUser, a.empresaId));
+  }, [audits, currentUser]);
 
   const exportableReportSet = useMemo(() => {
     // Regra de exportação: não exportar documentos isentos / não aplicáveis.
@@ -431,7 +433,7 @@ export default function Reports({ currentUser, selectedEmpresaGlobal }: ReportsP
                 className="w-full bg-white border border-slate-250 px-3 py-2 text-slate-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600 outline-none h-10 text-sm font-semibold cursor-pointer"
               >
                 <option value="">Todas</option>
-                {companies.map(c => <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companies)}</option>)}
+                {companies.filter(c => canAccessEmpresa(currentUser, c.id)).map(c => <option key={c.id} value={c.id}>{obterNomeEmpresa(c.id, companies)}</option>)}
               </select>
             </div>
           )}
